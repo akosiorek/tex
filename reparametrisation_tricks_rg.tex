@@ -207,8 +207,8 @@
 
 		\begin{equation}
 			\begin{aligned}
-				\frac{ \partial \ba\idx{1} } { \partial \bz\idx{1} } &= \frac{ \partial \p{ \ba\idx{1} }{ \theta }}{ \partial \bz\idx{1} } \\
-				&= \frac{ \partial \p{ \ba\idx{1} }{ \theta }}{ \partial \theta } \frac{\partial \theta}{\partial \bz\idx{1}}\\
+				\frac{ \partial \ba\idx{1} } { \partial \bz\idx{1} } &= \frac{ \ba\idx{1} }{ \partial \p{ \ba\idx{1} }{ \theta }}  \frac{ \partial \p{ \ba\idx{1} }{ \theta }}{ \partial \bz\idx{1} } \\
+				&= \frac{ \ba\idx{1} }{ \partial \p{ \ba\idx{1} }{ \theta }}  \frac{ \partial \p{ \ba\idx{1} }{ \theta }}{ \partial \theta } \frac{\partial \theta}{\partial \bz\idx{1}}\\
 			\end{aligned}
 		\end{equation}
 		\uncover<2->{
@@ -216,7 +216,7 @@
 		\begin{equation}
 			\begin{aligned}
 				\ba\idx{1} \sim \p{ \ba }{ \theta }\\
-				\uncover<3->{\frac{ \partial \p{ \ba\idx{1} }{ \theta }}{ \partial \theta } = \nexists}
+				\uncover<3->{\frac{ \ba\idx{1} }{ \partial \p{ \ba\idx{1} }{ \theta }} = \nexists}
 			\end{aligned}
 		\end{equation}}
 		
@@ -239,19 +239,20 @@
 		\begin{equation*}
 			\begin{aligned}
 				\epsilon &\sim \gauss{0, 1}\\
-				x &= 2 + \frac{1}{2} \epsilon\\
 				x &\sim \gauss{2, \frac{1}{4}} = \gauss{\mu, \sigma^2}\\
+				x &= g( \epsilon, \mu, \sigma^2) = \mu + \sigma  \epsilon = 2 + \frac{1}{2} \epsilon\\
 			\end{aligned}
 		\end{equation*}}
 		\uncover<3->{\begin{equation*}
 			\frac{\dint x}{\dint \mu} = 1 \qquad\qquad
-			\frac{\dint x}{\dint \sigma} = \frac{1}{2} \epsilon
+			\frac{\dint x}{\dint \sigma} = \frac{1}{2} \epsilon \qquad\qquad
+			\frac{\dint x}{\dint \epsilon} \overset{!}{=} 0
 		\end{equation*}}
 	\end{frame}
 
 	\begin{frame}{Why can we do this?}
 		\uncover<1-2>{We are NOT computing $\loss{x}$.\\}
-		\uncover<2->{We are computing $\expc{\loss{x}}{}{\p{x}{\data}{\theta}} = \int \p{x}{\data}{\theta} \loss{x} \dint x$.}
+		\uncover<2->{We are computing $\nabla_\theta \expc{\loss{x}}{}{\p{x}{\data}{\theta}} = \nabla_\theta \int \p{x}{\data}{\theta} \loss{x} \dint x$.}
 		
 		\uncover<3->{We get the gradient by the change of variables:
 		\begin{equation*}
@@ -278,6 +279,11 @@
 			\item Sample $\epsilon\idx{s} \sim \p{\epsilon}$.
 			\item $\nabla_\theta \loss{x} \simeq \frac{1}{S} \sum_{s=1}^S \nabla_\theta \loss{g( \epsilon\idx{s}, \theta)}$
 		\end{enumerate}
+	\uncover<2->{\textcolor{red}{What happens to the multiplication by $\p{\cdot}$?}}
+	\uncover<3->{
+	\begin{equation}
+		\expc{ f(x) }{}{\p{x}} = \int\textcolor{red}{ \p{x} } f(x) \dint x \simeq \frac{1}{S} \sum_{s=1}^S  f(x\idx{s})
+	\end{equation}}
 	\end{frame} 
 
 
