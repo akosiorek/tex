@@ -78,13 +78,19 @@
 	\end{description}
 	Moreover, since we learn the latent dynamics model, the generating model predicts the input at the next time-step as opposed to standard VAE practice, where it merely reconstructs the input from the current time-step.
 	
+	\subsection{Multimodal Distributions for Predictive Coding}
+	
+	The expressive power of VAEs is often constrained by too simple a form of the approximate posterior distribution and increasing the complexity of the approximate posterior typically leads to better results \addref{normalizing flows, inverse autoregressive flows, dvbf}. Complexity-increasing methods used so far typically lead to increased correlation between latent variables and/or multimodal distribution. While correlated latent variables may be desirable, they are against the principle coding principle \addref{is that even true?}, since the latent variables should be orthogonal in order to maximum the maximum amount of information possible. Multimodal distributions don't have this caveat. In case of predictive-coding, however, they lead to scenarios where the computed surprise on the input is ambiguous. 
+	
+	Assume a bimodal distribution predictive $\p{\widehat{z}_{t+1}}{\zt} = a \gauss{-1, 1} + b \gauss{1, 1}$ and an input $z_{t+1}$. The value of the surprise is $s_{t+1} = -\log \p{\widehat{z}_{t+1}}{\zt}\lvert_{\widehat{z}_{t+1} = z_{t+1}}$. Even in case of a unimodal distribution, there exist an infinite number of points giving rise to the same value of surprise, but at least that value exclusively determines the distance of the input from that mode. In case of a multimodal distribution, the value of surprise indicates the distance, but we don't know from which mode. That leads to encoding ambiguity and is disturbing. This in itself could be an argument of why all distributions used in predictive coding should be unimodal. Is that the case in the brain?
+	
 \section{ELBO}
 	
 	It's looking pretty straightforward, but to be derived...
 	
 \section{Architecture}
 
-	We need $L$ encoders, $L$ decoders, $L$ dynamic models and $L-1$ combinators. Each of the components could in principle be either stochastic or deterministic. To contain the model within the VAE framework, we take stochastic encoders and decoders, stochastic dynamic models, which we use as latent space priors, and deterministic combinators. 
+	We need $L$ encoders, $L$ decoders, $L$ dynamic models and $L-1$ combinators. Each of the components could in principle be either stochastic or deterministic. To contain the model within the VAE framework, we take stochastic encoders and decoders, stochastic dynamic models, which we use as latent space priors, and deterministic combinators. Computation graph is given in \cref{fig:comp}.
 	\begin{description}[leftmargin=\parindent]
 		\item[encoder] Given the previous latent state and a prediction error, it computes the parameters of the approximate posterior $\q{\bz_t^l}{\bz_{t-1}^l, \Delta \bz_t^l}{\phi}$.
 		\item[dynamic model] Computes the probability distribution over the new state estimate given a a previous state estimate, it's part of the prior as $\p{\bz_{t+1}}{\bz_{t-1}}{\theta}$.
