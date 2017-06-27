@@ -1,6 +1,8 @@
 \documentclass[]{article}
 
 \include{standardheader}
+\include{nonpaperheader}
+
 \usepackage{mlmacros}
 
 % needed for leftmargin ident of the description env
@@ -15,8 +17,10 @@
 \author{Adam Kosiorek}
 
 
-\variables{x,y,z}
+\variables{s,x,y,z}
 \probdists{p,q}
+
+\addbibresource{\string~/Documents/.bib/library.bib}
 
 \begin{document}
 
@@ -44,7 +48,9 @@
 
 	Modern sequential predictive models tend to update its hidden state at every time-step. It can be argued, however, that if a model is able to predict the world perfectly, it should not update its state. On the contrary, if a perfect prediction is available, the model should also be capable of evolving its hidden state so as to reflect the change of the state of the world \wrt the prediction. Predictive coding formalises this behaviour by using only prediction errors to update the world. 
 	
-	The idea dates back to the Kalman filter and beyond\addref. Recent advances in neural networks make it possible to frame the predictive coding problem as an auto-regressive neural network. Indeed, it has been addressed in a number of papers \addref{cortexnet, prednet, some others}. These models use the mean-squared error between the prediction and the corresponding input to update their hidden state. It leads to an ill-posed problem since there are many futures possible. The prediction, which is a maximum-likelihood estimate of what might happen, is only a single instantiation thereof. It would be theoretically more sound to normalise prediction errors by the covariance matrix of errors, an approach adopted by Kalman filtering. Friston \addref{Friston} argues this is also the approach taken by the brain, and it explains a lot of phenomena happening there. He suggests that the computational architecture of the brain forms a hierarchical system, where each layer constantly predicts the output of the lower levels of hierarchy in a fully Bayesian fashion. It gives rise to surprise, which is the negative log-likelihood of the inputs under the predictive distribution of the model. Friston argues that surprise leads to error normalisation \wrt prediction uncertainty, which can be interpreted as attention.
+	The idea dates back to the Kalman filter and beyond\addref. Recent advances in neural networks make it possible to frame the predictive coding problem as an auto-regressive neural network. Indeed, it has been addressed in a number of papers (\!\eg \cite{Lotter2016, Canziani2017}). These models use the mean-squared error between the prediction and the corresponding input to update their hidden state. It leads to an ill-posed problem since there are many futures possible. The prediction, which is a maximum-likelihood estimate of what might happen, is only a single instantiation thereof. It would be theoretically more sound to normalise prediction errors by the covariance matrix of errors, an approach adopted by Kalman filtering. \cite{Friston2009} argues this is also the approach taken by the brain, and it explains a lot of phenomena happening there. He suggests that the computational architecture of the brain forms a hierarchical system, where each layer constantly predicts the output of the lower levels of hierarchy in a fully Bayesian fashion. It gives rise to surprise, which is the negative log-likelihood of the inputs under the predictive distribution of the model. Friston argues that surprise leads to error normalisation \wrt prediction uncertainty, which can be interpreted as attention.
+	
+	In for neural networks, predictive coding has the advantage of minimising the covariance shift problem. If we assume that the expected value of predictions is the same as the expected value of inputs, then computing the surprise of inputs (under Gaussian predictive distribution) can have zero mean and unit variance. To be determined experimentally. It's similar to \cite{Klambauer2017}, but the name ``self-normalizing'' is somewhat more appropriate here.
 
 	Free-energy minimisation problems can be often written as variational inference, which is also true in this case. In what follows, we specify the model as a variational autoencoder, show its computational graph and derive the variational lower bound.
 
@@ -80,7 +86,7 @@
 	
 	\subsection{Multimodal Distributions for Predictive Coding}
 	
-	The expressive power of VAEs is often constrained by too simple a form of the approximate posterior distribution and increasing the complexity of the approximate posterior typically leads to better results \addref{normalizing flows, inverse autoregressive flows, dvbf}. Complexity-increasing methods used so far typically lead to increased correlation between latent variables and/or multimodal distribution. While correlated latent variables may be desirable, they are against the principle coding principle \addref{is that even true?}, since the latent variables should be orthogonal in order to maximum the maximum amount of information possible. Multimodal distributions don't have this caveat. In case of predictive-coding, however, they lead to scenarios where the computed surprise on the input is ambiguous. 
+	The expressive power of VAEs is often constrained by too simple a form of the approximate posterior distribution and increasing the complexity of the approximate posterior typically leads to better results (\cite{Rezende2015, Kingma2016, Karl2016}). Complexity-increasing methods used so far typically lead to increased correlation between latent variables and/or multimodal distribution. While correlated latent variables may be desirable, they are against the principle coding principle \addref{is that even true?}, since the latent variables should be orthogonal in order to maximum the maximum amount of information possible. Multimodal distributions don't have this caveat. In case of predictive-coding, however, they lead to scenarios where the computed surprise on the input is ambiguous. 
 	
 	Assume a bimodal distribution predictive $\p{\widehat{z}_{t+1}}{\zt} = a \gauss{-1, 1} + b \gauss{1, 1}$ and an input $z_{t+1}$. The value of the surprise is $s_{t+1} = -\log \p{\widehat{z}_{t+1}}{\zt}\lvert_{\widehat{z}_{t+1} = z_{t+1}}$. Even in case of a unimodal distribution, there exist an infinite number of points giving rise to the same value of surprise, but at least that value exclusively determines the distance of the input from that mode. In case of a multimodal distribution, the value of surprise indicates the distance, but we don't know from which mode. That leads to encoding ambiguity and is disturbing. This in itself could be an argument of why all distributions used in predictive coding should be unimodal. Is that the case in the brain?
 	
@@ -88,6 +94,11 @@
 	
 	It's looking pretty straightforward, but to be derived...
 	
+\section{Hierarchical Surprise Minimisation}
+
+	Let $\bzt^l$ be an encoding produced by  layer $l$ at time $t$ and let $\p{\widehat{\bz}_t^l}{\by_{t-1}}{\theta}$ be a corresponding predictive distribution. Surprise then reads as $\bs_t = -\log \p{\widehat{\bz}_t^l}{\by_{t-1}}{\theta}\lvert_{\widehat{\bz}_t^l = \bzt^l}$. We would like to minimise surprise at every layer in order to force the system to decompose the state into a hierarchical representation, where higher levels in the hierarchy correspond to more abstract concepts. Naively penalizing surprise, however, might lead to a scenario where $\bzt^l$ converges to a single value independent of the input $\bxt$ and the predictive distribution becomes sharply peaked at that value. In other words, the entirety of information is channelled through the lowest layer $l = 1$, while all layers for $l > 2$ collapse to a degenerate state. The first layer does not collapse due to prediction loss in the observation space.
+	
+	In the above setup inputs to the first layer (the observation $\bxt$) and inputs to subsequent layers (encodings $\bzt^l$) are treated differently \wrt backpropagated gradients. Namely, the backpropagated errors do not alter the inputs $\bx$, but they have every liberty to alter the encoding $\bz$. A simple solution is to cut the gradient paths from surprise $\bst^l$ to layers $k < l$. This way, surprise minimisation acts on the parameters of the predictive distribution, without altering the parameter that lead to generating the input.	
 \section{Architecture}
 
 	We need $L$ encoders, $L$ decoders, $L$ dynamic models and $L-1$ combinators. Each of the components could in principle be either stochastic or deterministic. To contain the model within the VAE framework, we take stochastic encoders and decoders, stochastic dynamic models, which we use as latent space priors, and deterministic combinators. Computation graph is given in \cref{fig:comp}.
@@ -186,5 +197,17 @@
 		\caption{Computation graph of the predictive coding framework.}
 		\label{fig:comp}
 	\end{figure}
+
+{ %put in braces to make references small
+%	\balance
+%	\small
+%	 	\bibliographystyle{unsrt}
+%	\bibliographystyle{plainnat}
+%	\bibliographystyle{authoryear}
+%	\bibliography{references}
+%	\bibliography{\string~/Documents/.bib/library}
+	
+}
+	\printbibliography
 
 \end{document}
