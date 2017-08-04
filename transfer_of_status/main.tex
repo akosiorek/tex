@@ -1,0 +1,41 @@
+\documentclass[a4paper, 10 pt, conference]{ieeeconf}
+\IEEEoverridecommandlockouts
+\overrideIEEEmargins
+
+
+\input{commands}
+
+
+\title{\LARGE \bf
+	Transfer of Status Report
+}
+
+\author{Adam Kosiorek$^{1}$
+\thanks{$^{1}$Oxford Robotics Institute, Dept of Engineering Science, University
+  of Oxford.}}
+
+\addbibresource{\string~/Documents/.bib/library.bib}
+
+\begin{document}
+\maketitle
+
+\input{abstract}
+\input{intro}
+\input{review}
+\input{proposal}
+\input{conclusions}
+
+\appendix
+
+\input{notes}
+
+\begin{figure*}[thpb]
+      \centering
+      \includegraphics[width=\textwidth]{Figs/wide.pdf}
+      \caption{A figure that spans both columns is produced using the
+        {\tt figure*} environment.}
+      \label{fig:twocolfigure}
+   \end{figure*}
+
+\printbibliography
+\end{document}
