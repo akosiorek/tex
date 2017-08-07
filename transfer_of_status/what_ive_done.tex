@@ -1,0 +1,6 @@
+\section{What I've done}
+\label{sec:done}
+
+    We developed a biologically inspired single object tracker, which tracks objects in videos used a hierarchy of attention mechanisms that mimic the human visual cortex.
+    
+    Even though it is fully supervised, we did it as a test bench for exploring the potential of self-supervision with temporal data. Attention mechanisms used in this work allowed us to increase computational efficiency of the approach but also to introduce learning cues that would be impossible to introduce otherwise. Specifically, we used self-supervision in terms of spatial masks for learning the foreground/background segmentation of the attention glimpse. It is self-supervision in the sense that we are not using any new information to introduce that loss; because the location of the object in the attention glimpse depends on the model and its parameters, it is different in every pass of the training algorithm, which is similar to augmenting the data. We don't use any new information since the bounding box information that we used was used previously to apply the bounding box loss.

@@ -48,7 +48,7 @@
 
 	Modern sequential predictive models tend to update its hidden state at every time-step. It can be argued, however, that if a model is able to predict the world perfectly, it should not update its state. On the contrary, if a perfect prediction is available, the model should also be capable of evolving its hidden state so as to reflect the change of the state of the world \wrt the prediction. Predictive coding formalises this behaviour by using only prediction errors to update the world. 
 	
-	The idea dates back to the Kalman filter and beyond\addref. Recent advances in neural networks make it possible to frame the predictive coding problem as an auto-regressive neural network. Indeed, it has been addressed in a number of papers (\!\eg \cite{Lotter2016, Canziani2017}). These models use the mean-squared error between the prediction and the corresponding input to update their hidden state. It leads to an ill-posed problem since there are many futures possible. The prediction, which is a maximum-likelihood estimate of what might happen, is only a single instantiation thereof. It would be theoretically more sound to normalise prediction errors by the covariance matrix of errors, an approach adopted by Kalman filtering. \cite{Friston2009} argues this is also the approach taken by the brain, and it explains a lot of phenomena happening there. He suggests that the computational architecture of the brain forms a hierarchical system, where each layer constantly predicts the output of the lower levels of hierarchy in a fully Bayesian fashion. It gives rise to surprise, which is the negative log-likelihood of the inputs under the predictive distribution of the model. Friston argues that surprise leads to error normalisation \wrt prediction uncertainty, which can be interpreted as attention.
+	The idea dates back to the Kalman filter and beyond\addref. Recent advances in neural networks make it possible to frame the predictive coding problem as an auto-regressive neural network. Indeed, it has been addressed in a number of papers \citep{Lotter2016, Canziani2017}. These models use the mean-squared error between the prediction and the corresponding input to update their hidden state. It leads to an ill-posed problem since there are many futures possible. The prediction, which is a maximum-likelihood estimate of what might happen, is only a single instantiation thereof. It would be theoretically more sound to normalise prediction errors by the covariance matrix of errors, an approach adopted by Kalman filtering. \cite{Friston2009} argues this is also the approach taken by the brain, and it explains a lot of phenomena happening there. He suggests that the computational architecture of the brain forms a hierarchical system, where each layer constantly predicts the output of the lower levels of hierarchy in a fully Bayesian fashion. It gives rise to surprise, which is the negative log-likelihood of the inputs under the predictive distribution of the model. Friston argues that surprise leads to error normalisation \wrt prediction uncertainty, which can be interpreted as attention.
 	
 	In for neural networks, predictive coding has the advantage of minimising the covariance shift problem. If we assume that the expected value of predictions is the same as the expected value of inputs, then computing the surprise of inputs (under Gaussian predictive distribution) can have zero mean and unit variance. To be determined experimentally. It's similar to \cite{Klambauer2017}, but the name ``self-normalizing'' is somewhat more appropriate here.
 
@@ -198,16 +198,6 @@
 		\label{fig:comp}
 	\end{figure}
 
-{ %put in braces to make references small
-%	\balance
-%	\small
-%	 	\bibliographystyle{unsrt}
-%	\bibliographystyle{plainnat}
-%	\bibliographystyle{authoryear}
-%	\bibliography{references}
-%	\bibliography{\string~/Documents/.bib/library}
-	
-}
 	\printbibliography
 
 \end{document}

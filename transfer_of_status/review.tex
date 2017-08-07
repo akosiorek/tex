@@ -1,59 +1,82 @@
-\section{RELATED WORK}
+\section{Related Work}
+\label{sec:lit}
 
-Things to write about:
-\begin{itemize}
-	\item Sequence prediction: text, motion, videos
-	\item Predictive Coding
-	\item Semi-supervised learning: learning by association and ladder networks
-	\item behaviour learning by RL: maze navigation, locomotion patters
-	\item unsupervised learning: AIR
-\end{itemize}
+%    Things to write about:
+%    \begin{itemize}
+%        \item Sequence prediction: text, motion, videos
+%        \item Predictive Coding
+%        \item Semi-supervised learning: learning by association and ladder networks
+%        \item behaviour learning by RL: maze navigation, locomotion patters
+%        \item unsupervised learning: AIR
+%    \end{itemize}
 
-\subsection{Sequence Prediction}
 
-	Sequence prediction has been a long standing problem in machine learning. Early works on neural networks used next-step prediction of chaotic time-series as a benchmark \addref. More recently, next time-step prediction has been addressed in the context of natural language processing, where the goal was to predict the next word \addref or a character \addref conditioned on some previous texts. It is often argued that this time of prediction requires vast contextual knowledge and often requires understanding of some abstract rules about the workings of the world. It is also considered for motion prediction, specifically in the joint-angle space, where the goal is to predict joint configuration of a given skeleton conditioned on some post motion of this skeleton \addref. A slightly different take on the subject is presented by \addref{deep tracking}, where the task is to predict motion of an arbitrary number of objects even when they are occluded.
-	
-	Next-timestep prediction is done with a plethora of different methods, many of which share the central component in the form of a recurrent neural network. Depending on the domain, the RNN can implement different state transition, evolve over different timescales, use several layers, use attention or employ domain-specific structure of the hidden state \eg feature maps for visual inputs. 
-	
-	Another characteristic consistent across domains is that this task can be learned in an unsupervised, or father self-supervised, fashion. No explicit ground-truth is needed to learn to predict a sequence, since the ground-truth is the sequence itself, albeit shifted. 
-	
-	Yet another trait particular to next time-step prediction is that the model maintains some hidden state which describes the state of the world. We can argue that whenever the prediction of the model is perfect (the prediction matches the next time-step perfectly), the hidden state perfectly reflects the state of the world and therefore does not have to be updated. None of the aforementioned approaches make use of that observation, and therefore in every of the presented cases the model has to learn to compute discrepancies between the new observation and the hidden state of the world and to update the hidden state by corrected those discrepancies only. This is possible, as proved by the satisfactory performance of the presented approaches, but that means that all next-timestep prediction settings have a common structure that has been neglected so far. Below I describe the idea of predictive coding, and how frameworks following this approach address the limitation of usual sequence predictors.
-	
-\subsection{Predictive Coding}
-
-	The idea of predictive coding dates back at least to the Kalman filter \addref. Kalman filter is an instance of a Gaussian linear system used for estimating the state of the world. It first computes a prediction of the world state at the next timestep and then, when it gets hold of the observation at that timestep, it updates its prediction. It also estimates noise covariance matrices for the prediction and update steps and their respective contributions are proportional to the inverse covariance matrices. 
-	
-	Friston \addref argues that predictive coding can be implemented as energy minimisation and that energy minimisation can well explain learning in the brain and many neuroscientific phenomona that would otherwise remain quite puzzling to neuroscientists. He suggests that the computational architecture of the brain forms a hierarchical system, where each layer constantly predicts the output of the lower levels of hierarchy in a fully Bayesian fashion. It gives rise to surprise, which is the negative log-likelihood of the inputs under the predictive distribution of the model. Friston argues that surprise leads to error normalisation \wrt prediction uncertainty, which can be interpreted as attention.
-	
-	It is possible to frame the next-timestep prediction in terms of an auto-regressive neural network. Indeed, it has been addressed in a number of papers \citep{Lotter2016, Canziani2017}. These models use the mean-squared error between the prediction and the corresponding input to update their hidden state. It leads to an ill-posed problem since there are many futures possible. The prediction, which is a maximum-likelihood estimate of what might happen, is only a single instantiation thereof.
+%
+%   Unsupervised & Self-supervised Learning
+%   
+    \subsection{Unsupervised Learning via Generative Modelling}
+       While data in general is abundant and cheap, data for supervised learning is often expensive and time-consuming to gather. The majority of ML algorithms require relatively large amounts of labelled training data. One of the explanation states that they start learning without any prior knowledge of the world \addref. This is in stark contrast to humans, who not only have a vast amount of knowledge about the world, but also expand it continuously and without any supervision \citep{Friston2009guide}. One alternative is to perform generative modelling of the probability distribution $\p{\bx} = \int \p{\bx, \bz} \dint \bz$ of observations $\bx$ in terms of some latent variables $\bz$. The latent variables \emph{explain} the observations and can make the joint distribution $\p{\bx, \bz}$ tractable even in the case of an intractable marginal distribution. The latent encoding can be used in upstream tasks \eg for transfer or semi-supervised learning \citep{Pan2010}. \cite{Hinton2006dbn} introduced Deep Belief Networks (DBN) which explain the observations in terms of Bernoulli latent variables. Alternatively, we can approximate the true data distribution by deriving the evidence lower bound (ELBO) on the log probability of the data, which results in variational autoencoders (VAE) \citep{Kingma2013,Rezende2014}. VAEs are much more flexible than DBNs as they allow latent variables from arbitrary probability distribution functions (pdf) and can be trained end-to-end with off-the-shelf gradient-based methods. These approaches are primarily suited to modelling datasets of independent and identically distributed (\emph{i.i.d.}) points.
+%
+%   Temporal dependencies in data; neural nets can learn dynamics and features from data
+%
+    \subsection{Sequence Modelling}
+        Traditional approaches to sequence modelling often consider inference of latent variables, \eg linear dynamical systems or hidden markov models, that explain the data \citep{Bishop2006}.
+        They often require dynamics of the system to be known and often have too little capacity to model complex and high-dimensional real-world data.
+        Neural networks, on the other hand, can learn both features and state dynamics from data and they can approximate functions of arbitrary complexity with arbitrary precision.
+        Even early works on the topic demonstrated how useful neural networks are for prediction of chaotic time-series \citep{Lapedes1988}.
+        Since then, neural networks have been successfully applied for sequence classification and prediction in different domains: written natural language, speech and audio, motion capture data or brain waves \citep{Langkvist2014}. 
+%
+%   Sequence Prediction as a type of unsupervised learning
+%
+        Unsupervised learning can be also done as sequence prediction, where the task is to predict the observation at time $t+1$ given a sequence of observations $\bxts$ up to time $t$. This task is flexible in that it admits many different model types, including Gaussian processes, support vector machines or feed-forward neural networks, although models which can explicitly use temporal structure of data such as Gaussian process dynamic models (GPDM; \cite{Wang2008}) or recurrent neural networks (RNN) tend to perform better. Recently, sequential counterparts of VAEs have been proposed, which allow efficient generative modelling of sequences \citep{Fabius2015,Bayer2015,Karl2017}.
+%
+%   Predictive Coding
+%
+    \subsection{Predictive Coding}
     
-\subsection{Semi-supervised and Unsupervised Learning}
-
-    Next time-step prediction and predictive coding both fall in the category of unsupervised learning, where the aim is to learn the probability distribution over sequences of observations $\bx$, namely $\p{\bxTs}$. Some of the approaches do so by assuming latent variables $\bz$ the explain the data and learn the joint distribution of $\p{\bx, \bz}$ instead. Any type of auto-encoder falls within that category.
+%
+% AIR and Learning by Association
+%
+    \subsection{Learning of Abstract Ideas.}
     
-    \begin{enumerate}
-        \item autoencoders, denoising, constrastive
-        \item ladder networks
-        \item deep belief nets
-        \item vae
-        \item learning by association
-    \end{enumerate}
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+%	
+%	Yet another trait particular to next time-step prediction is that the model maintains some hidden state which describes the state of the world. We can argue that whenever the prediction of the model is perfect (the prediction matches the next time-step perfectly), the hidden state perfectly reflects the state of the world and therefore does not have to be updated. None of the aforementioned approaches make use of that observation, and therefore in every of the presented cases the model has to learn to compute discrepancies between the new observation and the hidden state of the world and to update the hidden state by corrected those discrepancies only. This is possible, as proved by the satisfactory performance of the presented approaches, but that means that all next-timestep prediction settings have a common structure that has been neglected so far. Below I describe the idea of predictive coding, and how frameworks following this approach address the limitation of usual sequence predictors.
+%	
+%\subsection{Predictive Coding}
+%
+%	The idea of predictive coding dates back at least to the Kalman filter \addref. Kalman filter is an instance of a Gaussian linear system used for estimating the state of the world. It first computes a prediction of the world state at the next timestep and then, when it gets hold of the observation at that timestep, it updates its prediction. It also estimates noise covariance matrices for the prediction and update steps and their respective contributions are proportional to the inverse covariance matrices. 
+%	
+%	Friston \addref argues that predictive coding can be implemented as energy minimisation and that energy minimisation can well explain learning in the brain and many neuroscientific phenomona that would otherwise remain quite puzzling to neuroscientists. He suggests that the computational architecture of the brain forms a hierarchical system, where each layer constantly predicts the output of the lower levels of hierarchy in a fully Bayesian fashion. It gives rise to surprise, which is the negative log-likelihood of the inputs under the predictive distribution of the model. Friston argues that surprise leads to error normalisation \wrt prediction uncertainty, which can be interpreted as attention.
+%	
+%	It is possible to frame the next-timestep prediction in terms of an auto-regressive neural network. Indeed, it has been addressed in a number of papers \citep{Lotter2016, Canziani2017}. These models use the mean-squared error between the prediction and the corresponding input to update their hidden state. It leads to an ill-posed problem since there are many futures possible. The prediction, which is a maximum-likelihood estimate of what might happen, is only a single instantiation thereof.
+%    
+%\subsection{Semi-supervised and Unsupervised Learning}
+%
+%    Next time-step prediction and predictive coding both fall in the category of unsupervised learning, where the aim is to learn the probability distribution over sequences of observations $\bx$, namely $\p{\bxTs}$. Some of the approaches do so by assuming latent variables $\bz$ the explain the data and learn the joint distribution of $\p{\bx, \bz}$ instead. Any type of auto-encoder falls within that category.
+%    
+%    \begin{enumerate}
+%        \item autoencoders, denoising, constrastive
+%        \item ladder networks
+%        \item deep belief nets
+%        \item vae
+%        \item learning by association
+%    \end{enumerate}
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    
+%    

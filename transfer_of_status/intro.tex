@@ -1,7 +1,13 @@
-\section{INTRODUCTION}
+\section{Introduction}
 
-Computers are often praised for being better than humans at things that are inherently hard for humans, yet they are also  criticised for being considerably worse than humans at things that are very easy for humans \addref{where is it?}. While some algorithms perform well without being trained on huge amounts of data \addref{}, they are often domain specific \addref. Often to increase performance, much more complicated model and much larger amounts of data are required. It has been recently shown \addref that performance in computer vision tasks is logarithmic in the size of the dataset. 
-
-Humans, on the other hand, are known to be extremely good at learning. We can often learn and generalise well after seeing only a single labelled data point. Some argue \addref, that this can be explained by learned feature representation. Our brains are hard-wired to build specific representations of the world and are exposed to millions of images every day, constantly inferring truths about the world. That is in contrast to modern machine learning algorithms, which are typically trained only once and they are deployed with their parameters frozen. Moreover, modern algorithms are typically trained from a cold start, without any prior knowledge of the world.
-
-Finally, human cognition often involves using time-dependencies in the data \addref. This contradicts current computer vision practice, where the majority of algorithms is used for inference from single data points. While reasonable in some problem domains, sequential character of data can be leveraged in other domains for higher performance, more consistent model outputs, better learning with better generalization. I would argue that even in domains where inference from single data points is required, training of those algorithms could benefit from sequential nature of data.
+    We spend our lives roaming through the space-time continuum. Our senses have evolved to make use of the temporal dependencies omnipresent in real-world data. And yet the majority of machine learning (ML) algorithms either do not use temporal dependencies at all or rely on features extracted by models which do not take them into account.
+    I am interested in and will focus on using neural networks for probabilistic time-series modelling, with the emphasis on unsupervised and self-supervised learning and the connection between learning and interacting with the environment.
+    I am going to argue that time dependencies in data and the interaction of an agent with its environment are enough to create a powerful signal for self-supervised learning.
+    My work as a PhD student at Oxford started with the problem of single object tracking in videos, which resulted in a successful NIPS 2017 submission \citep{Kosiorek2017}.    
+    This project gave me an opportunity to explore learning in the presence of temporal dependencies and to explore the concept of self-supervision: how to make the system learn better without using any additional external (\eg ground-truth) information? 
+    The rest of this paper is structured as follows:
+    \Cref{sec:lit} covers prior work related to the areas in question.
+    Specifically, I summarise the tasks of sequence prediction, predictive coding, variants of unsupervised learning and present a number of relevant approaches.
+    In the \cref{sec:done}, I describe the work on object tracking and how it ties with my interests and the planned future work on structured unsupervised learning for videos, predictive coding and model-based reinforcement learning.
+    \Cref{sec:proposal} describes my future research plans, related risks and expected outcomes.
+    \Cref{sec:conclusions} concludes this work. 
