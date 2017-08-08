@@ -1,21 +1,63 @@
 \section{Research Proposal}
 \label{sec:proposal}
 
-Things to write about:i
-\begin{itemize}
-	\item Predictive Coding: next-frame prediction with VAEs, it's normalisation behaviour, inner feedback loop for corrections
-	\item Model-based RL: sample efficiency, using a policy to improve learning speed of the perception module, learn a policy in the absence of a goal
-	\item Unsupervised object tracking \& detection
-\end{itemize}
+%Things to write about:
+%\begin{itemize}
+%	\item Predictive Coding: next-frame prediction with VAEs, it's normalisation behaviour, inner feedback loop for corrections
+%	\item Model-based RL: sample efficiency, using a policy to improve learning speed of the perception module, learn a policy in the absence of a goal
+%	\item Unsupervised object tracking \& detection
+%\end{itemize}
+
+Drawing from my experiences on HART, I would like to focus my future research on representation learning for videos. I believe it is possible to combine attentive recurrent tracking with an approach similar to AIR of \cite{Eslami2016} to create a system capable of learning the idea of an object and to track that object without any supervision. In parallel, I would like to explore the predictive tracking paradigm, or rather its instantiation within the variational inference framework. Finally, I would like to merge these two branches to learn a model of the environment and use it in a model-based reinforcement learning. In the following, I will describe the three ideas, explore connections between them and evaluate associated risks.
+
+\subsection{Unsupervised Learning to Track Objects}
+\label{sec:obj}
+
+    Let $\bxTs$ be an image sequence containing a moving object $o$ and let $\bm{b}_1$ be a bounding box around that object in the initial frame. Assuming that the bounding box is tight (\ie it contains the maximum amount of the object and the minimum amount of background possible) and assuming that the object appearance changes slower than the appearance of the object's background, it is possible to learn to track that object without any supervision. The learning framework to do so consists of the following steps:
+    \begin{enumerate}
+        \item extract an attention glimpse $\bgt$ containing the object $o$ in the image $\bxt$,
+        \item predict attention parameters and extract the attention glimpse $\bg_{t+1}$ at time $t+1$,
+        \item reconstruct $\bg_{t+1}$ from $\bgt$ using an approach similar to AIR. If the reconstruction is constrained to be rectangular and done in a single step, the reconstruction gives the bounding box coordinates $\bm{b}_{t+1}$ at time $t+1$.
+    \end{enumerate}
+    Beside the already mentioned assumptions, the above approach relies on the assumption that it is possible to predict attention parameters for the next time-step and that it is possible to reconstruct contents of a glimpse based on the contents of the glimpse at the previous time-step. Moreover, for the step (3) to work, that is, to have a bounding box as a result of reconstruction, we need to enforce that the object is contained within the glimpse. It is not immediately clear whether theses assumptions hold and it is one of the purposes of this project to determine their validity. We believe, however, that it is possible to enforce them and we will now describe how.
+    
+    
+    Given the initial tight bounding box and the initial frame, it should be clear that it is possible to reconstruct the object at the next time-step given its location. If we assume small object motions (high frame rate), we can assume that the object at time $t+1$ lies within the neighbourhood of the object at time $t$ and it is therefore enough to expand the size of the attention glimpse to cover the object at the next time step.
 
 
-\begin{figure}
-\centering
-\begin{tabular}{cc}     
- \includegraphics[height=0.42\columnwidth]{Figs/fig01.pdf} &
- \includegraphics[height=0.40\columnwidth]{Figs/fig02.pdf} \\
- (a) & (b)
-\end{tabular}
-\caption{Two figures wrapped in a table: (a) a graph and (b) a college.}
-\label{fig:myfirstfigure}
-\end{figure}
+    Given that we know how the object looks like and given that we have a rough idea of where the object might be in the next frame, we can determine the object location in that frame: we can compute the object map (mechanism very similar to dorsal stream from HART).
+    
+    Once we have the object map, we can reconstruct not the whole glimpse, but only the parts of the glimpse indicated by the object mask as the part containing the object.
+    
+    Given that we can compute the object mask, we can learn the attention by maximising the positive area of the object mask (area containing the object), as this should encourage the attention to contain the object. There exists a degenerate solution, however. If the attention glimpse shrinks to a very small size, the object can easily cover the entire area of the glimpse. The solution would be to maximise not the size of the object within the glimpse, but the size of the object as indicated by the object mask but projected back to the image coordinates.
+    
+    This objective should be enough to learn to predict attention parameters.
+    
+    Reconstruction can be learned given object masks.
+    
+    It should be possible to learn object masks end-to-end with the other components of the system without encouraging them by any explicit loss function. The object mask should emerge from that fact that the background behind the object is relatively less correlated with the object itself, whereas the correlation between object appearance in subsequent frames is high. In case it proves to be impossible, it is possible to pretrain the object mask component without any supervision by...
+
+
+\subsection{Variational Inference for Predictive Coding}
+\label{sec:pred}
+
+    Unsupervised learning to track objects might prove to be an effective way for learning representation for videos. One drawback is that it is domain specific and can be applied only to image sequences. In the following I would like to explore a framework for learning representations for any time of time-series. 
+    
+    Predictive coding describes a family of models for sequence prediction, typically the next time-step prediction. Since the majority of sequence predictors maintain a (Markovian) hidden state, it is possible to impose additional structure. If the model is able to perfectly predict the next time-step, one can argue that it does not have to update its hidden state as it contains perfect information about the world, see \cref{sec:pred_coding} for details. \cite{Friston2009guide} argues that this type of modelling can explain various learning-related phenomena in the human brain. He also supports the view that the brain is Bayesian and therefore any predictive coding there is implemented in a Bayesian way. Specifically, predictions of the sensory inputs are probabilistic, with minimisation of surprise as the learning criterium. This view has not been explored in the machine learning literature, and yet it gives rise to a family of models shaped after the VAE, but reformulated for prediction as opposed to reconstruction of the input. This formulation has several advantages, namely:
+    \begin{description}
+        \item[Non-stationary priors] A probabilistic prediction of the activations in the latent space can be used as a prior for the latent encoding at the next time-step. It maintains its properties as a regulariser while admitting higher flexibility.
+        
+        \item[Self-normalisation] Probabilistic predictive coding can be used for normalisation of activations of neural networks. Given that we minimise surprise as the loss criterion, and assuming Gaussian output probability distribution, we can use the statistics of the distribution to whiten latent encoding at later $l$ before inputting them to later $l+1$. It can potentially alleviate or even solve the problem of covariance shift in the encoder part of the model, therefore removing any need for explicit normalisation (\eg batch normalisation). The validity of this argument is supported by the successful usage of neural baselines for variance reduction in \cite{Mnih2014}. It is unclear how normalisation of the encoder will impact learning of the whole system, nor whether it is possible to devise a similar method of normalising the decoder activations.
+    \end{description}
+
+\subsection{Model-based Reinforcement Learning}
+
+    Predicting the next time-step might prove to be an effective way of representation learning. Predictive coding can make it more efficient by imposing specific structure on the model and can alleviate some optimisation problems. Going a step further, we can force learning a concept of an object (and laws of physics?) by enforcing the notions of consistency and coherence between views of the same object at subsequent time-steps. It remains to ask whether we can make the learning faster, more general or more efficient by using an agent which can interact with its environment. 
+    \begin{enumerate}
+        \item Predictive coding with a policy: can a policy learn to minimise the surprise in a different way then a degenerate solution of avoiding any motion?
+        \item Can we use a policy to maximise surprise, which exposes the perception model to otherwise rare events?
+        \item Can this approach be used to learn a policy with the absence of any goal?
+        \item Does predicting the next time-step lead to faster learning in RL, especially when rewards are sparse? Does it lead better regularisation? Does it encourage or discourage exploration?
+    \end{enumerate} 
+    Approaches described in \cref{sec:obj,sec:pred} can be used for model learning in a model-based reinforcement learning setting. They can be used for pretraining or as unsupervised auxiliary tasks. While interactions between proposed methods and reinforcement learning remain unknown, they can potentially improve sample efficiency and scalability of reinforcement learning approaches and I am interested in exploring this topic.
+
