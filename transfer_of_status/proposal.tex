@@ -8,9 +8,12 @@
 %	\item Unsupervised object tracking \& detection
 %\end{itemize}
 
-    Drawing from my experiences with HART, I am going to focus on representation learning for videos. I believe that imposing a specific model structure can lead to better, easier and faster learning and that generative modelling is able to produce neural representations that are easily transferable to other tasks. To this end, I would like to explore the predictive coding paradigm, or rather its instantiation within the variational inference framework. 
-    Going further, I believe it is possible to combine attentive recurrent tracking with an approach similar to AIR \citep{Eslami2016} to create a generative model of a moving object, capable of inferring intuitive physics without any supervision.
-    Finally, I would like to merge these two branches to learn a model of the environment and use it in a model-based reinforcement learning. In the following, I will describe the three ideas, explore connections between them and evaluate associated risks.
+%    Drawing from my experiences with HART, I am going to focus on representation learning for videos. I believe that imposing a specific model structure can lead to better, easier and faster learning and that generative modelling is able to produce neural representations that are easily transferable to other tasks. To this end, I would like to explore the predictive coding paradigm, or rather its instantiation within the variational inference framework. 
+%    Going further, I believe it is possible to combine attentive recurrent tracking with an approach similar to AIR \citep{Eslami2016} to create a generative model of a moving object, capable of inferring intuitive physics without any supervision.
+%    Finally, I would like to merge these two branches to learn a model of the environment and use it in a model-based reinforcement learning. In the following, I will describe the three ideas, explore connections between them and evaluate associated risks.
+
+
+    During the next year, I will develop a series of structured generative models of video sequences. I am going to start by building a generative model of a moving object as an extension to the AIR framework. As the problem is hard, we will start with a toy dataset of moving two-dimensional shapes. In the later version I will focus on moving three-dimensional shapes in the presence of camera motion. The final step is to improve the AIR model to work on images with rich background and real-world data, and then extending this modification to the generative models of moving object. Finally, we will investigate using trained models within the Dyna framework.
     
     
 \subsection{Variational Inference for Predictive Coding}

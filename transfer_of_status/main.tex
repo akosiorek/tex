@@ -1,29 +1,36 @@
-\documentclass[a4paper, 10 pt, journal]{ieeeconf}
+%\documentclass[a4paper, 10 pt, journal]{ieeeconf}
 
-%\documentclass[a4paper, 12 pt, journal, onecolumn]{ieeeconf}
-%\linespread{1.3}
+\documentclass[a4paper, 12 pt, journal, onecolumn]{ieeeconf}
+\linespread{1.6}
+\usepackage[margin=20mm]{geometry}
 
 \IEEEoverridecommandlockouts
-\overrideIEEEmargins
+%\overrideIEEEmargins
 \let\labelindent\relax
 
 \input{commands}
 
 
-\title{\LARGE \bf
-	Transfer of Status Report
+\title{\Large \bf
+	Transfer of Status Report\\
+%    Generative Sequence Modelling for\\ Model-based Reinforcement Learning
+    Structured Sequence Modelling
 }
 
-\author{Adam Kosiorek$^{1}$
-\thanks{$^{1}$Oxford Robotics Institute, Dept of Engineering Science, University
-  of Oxford.}}
+\author{%
+    Adam Kosiorek$^{1}$\\
+    Supervisor: Prof. Ingmar Posner
+    \thanks{$^{1}$Applied Artificial Intelligence Lab, Oxford Robotics Institute,  University
+  of Oxford.}
+}
+
 
 \addbibresource{\string~/Documents/.bib/library.bib}
 
 \begin{document}
 \maketitle
 
-\input{abstract}
+%\input{abstract}
 \input{intro}
 \input{review}
 \input{what_ive_done}
