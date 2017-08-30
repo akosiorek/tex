@@ -1,53 +1,82 @@
 \section{Introduction}    
     
-%    We spend our lives roaming through the space-time continuum and our brains have evolved to use omnipresent temporal dependencies. They determine the evolution of the outside world, but they also, or maybe because of that, facilitate learning in humans. Even when time itself is not important, temporally-ordered sequence of informative events can introduce context and condition further information processing. Time dependencies permeate our existence to the extent that it is hard to find examples of reasoning not involving them. And yet, the majority of machine learning (ML) algorithms either do not use temporal dependencies at all or do so in a very limited sense. 
-%    With no reliance on temporal dependencies, supervised ML algorithms are forced to heavily depend on expensive human-labelled data, while accounting for all redundancies therein. I am going to argue that explicit time-series modelling and interaction with the environment are enough to create a powerful signal for self-supervised learning. The resulting feedback loop eliminates the need for huge human-tagged datasets, while improving performance of the existing approaches at the same time.
+%    Sequence prediction is a powerful framework for unsupervised learning.
+%    Its utility can be intuitively explained by the fact that predicting the future, if it is to be done well, requires a very good understanding of the present. 
+%    If a model can learn the idea of an object and infer intuitive physics from data, it should be able to constrain its predictions to the ones where objects obey physically plausible trajectories:\eg a car should not dissolve into thin air.
+%    Moreover, the availability and abundance of real-world sequential data make it possible to train large and highly-complex models for this task.
+%    While modern approaches based on neural networks have achieved considerable success, they generally do not take any domain-specific problem structure into account, nor do they provide transferable representations that could be easily used for downstream tasks.         
 %    
-%    To this end, I am going to explore the use of Bayesian neural networks for time-series modelling. While my focus is on unsupervised or rather self-supervised learning, I will also explore the connection between learning and interacting with the environment. Specifically, I will argue that structured time-series prediction can lead to learning rich neural representations of sensory inputs. By following the probabilistic approach, it is possible to remove redundancies from the data and model attention mechanisms similar to those present in the human brain. I will also argue that enforcing particular model structure is equivalent to introducing prior information into the model, thereby constraining the learning problem and making it easier to learn certain properties of the dataset. In doing so, I will build on the recent advances in variational inference and construct a generative framework for unsupervised single object tracking in videos. Finally, I will use the learned model for model-based reinforcement learning (RL), with the purpose of improving sample efficiency of RL on one hand, and boosting the learning speed of the perception module by interaction with the environment on the other. 
+%    Recent advances in variational inference and neural networks allow building scalable generative latent-variable models of high-dimensional data.
+%    On one hand, the latent variables explain observations, are typically low-dimensional, and can be used in downstream tasks.
+%    On the other, this approach results in an approximation to the true probability distribution of the data, which allows generation of multiple trajectories from a single starting point. 
+%    One could argue that stochasticity is not necessary in fully-observable environments. In the real-world, however, partial-observability is most often the case and a stochastic system can act as a simulator conditioned on imperfect information. 
+%%    
+%    A stochastic and imperfect simulator of this kind can be used for model-based reinforcement learning (RL) as argued by \cite{Sutton1991} to improve sample-efficiency of model-free approaches. 
+%    The majority of sequence predictors that act in the image space has the problem, however, that the further in time they venture, the more blurry and undefined the predictions become. 
+%    With the increasing divergence between the true data distribution and the predictive distribution the quality of model-free policies decreases and planning becomes inaccurate.
 %
-%    My work as a DPhil student at Oxford started with the problem of single object tracking in videos, which resulted in a NIPS submission \citep{Kosiorek2017}.    
-%    This project gave me an opportunity to explore learning in the presence of temporal dependencies and to explore the concept of self-supervision: how to make the system learn better without using any additional external (\eg ground-truth) information? 
-%    The rest of this paper is structured as follows:
-%    \Cref{sec:lit} covers prior work related to the areas in question.
-%    I summarise the tasks of sequence prediction, predictive coding, variants of unsupervised learning and present a number of relevant approaches.
-%    In the \cref{sec:done}, I describe my work on object tracking and how it ties with my interests and the planned future work on structured unsupervised learning for videos, predictive coding and model-based reinforcement learning.
-%    \Cref{sec:proposal} describes my future research plans, related risks and expected outcomes.
-%    \Cref{sec:conclusions} concludes this work. 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-%    Sequence prediction is a powerful framework for unsupervised learning. With the abundance of sequential real-world data available, it is possible to train large and highly-complex models for the next-time-step prediction. 
-    
-%    state prediction -> intuitive physics -> predicting the evolution of the world in the spirit of a simulator -> transfer policies learned in simulation into the real world -> real-world sample efficiency. 
-
-    Sequence prediction is a powerful framework for unsupervised learning.
-    Its utility can be intuitively explained by the fact that predicting the future, if it is to be done well, requires a very good understanding of the present. 
-    If a model can learn the idea of an object and infer intuitive physics from data, it should be able to constrain its predictions to the ones where objects obey physically plausible trajectories:\eg a car should not dissolve into thin air.
-    Moreover, the availability and abundance of real-world sequential data make it possible to train large and highly-complex models for this task.
-    While modern approaches based on neural networks have achieved considerable success, they generally do not take any domain-specific problem structure into account, nor do they provide transferable representations that could be easily used for downstream tasks.         
-    
-    Recent advances in variational inference and neural networks allow building scalable generative latent-variable models of high-dimensional data.
-    On one hand, the latent variables explain observations, are typically low-dimensional, and can be used in downstream tasks.
-    On the other, this approach results in an approximation to the true probability distribution of the data, which allows generation of multiple trajectories from a single starting point. 
-    One could argue that stochasticity is not necessary in fully-observable environments. In the real-world, however, partial-observability is most often the case and a stochastic system can act as a simulator conditioned on imperfect information. 
+%    All work performed under this thesis will aim at constructing a generative latent-variable model of sequential data, where the model structure introduces prior information about the task. Specifically, the structure of the model will encourage learning intuitive physics and decomposing scenes into their constituent components; by modelling moving objects separately, it will be possible to perform counter-factual stochastic simulation. One of the core features of the model is the ability to simulate in the latent space, therefore circumventing the issue of blurry predictions. Since latent variables describe the state of the world, we will aim at conditioning a model-free policy on these latent variables for action prediction. Finally, we will test the generative model of the environment in the Dyna framework \citep{Sutton1991}.
 %    
-    A stochastic and imperfect simulator of this kind can be used for model-based reinforcement learning (RL) as argued by \cite{Sutton1991} to improve sample-efficiency of model-free approaches. 
-    The majority of sequence predictors that act in the image space has the problem, however, that the further in time they venture, the more blurry and undefined the predictions become. 
-    With the increasing divergence between the true data distribution and the predictive distribution the quality of model-free policies decreases and planning becomes inaccurate.
+%    The rest of this paper is structured as follows.
+%    \Cref{sec:lit} covers prior work related to the areas in question.
+%    I summarise the task of sequence prediction, describe relevant variants of unsupervised learning, investigate how model structure helps to learn abstract concepts from data and examine prior work on Dyna.
+%    In \cref{sec:done}, I describe our work on object tracking and how it ties with my interests and the planned future work.
+%%    \Cref{sec:proposal} details my future research plans, related risks and expected outcomes.
+%    \Cref{sec:proposal} details how we are going to build a structured generative model of sequences and use it in model-based RL.
+%    \Cref{sec:conclusions} concludes this work.
 
-    All work performed under this thesis will aim at constructing a generative latent-variable model of sequential data, where the model structure introduces prior information about the task. Specifically, the structure of the model will encourage learning intuitive physics and decomposing scenes into their constituent components; by modelling moving objects separately, it will be possible to perform counter-factual stochastic simulation. One of the core features of the model is the ability to simulate in the latent space, therefore circumventing the issue of blurry predictions. Since latent variables describe the state of the world, we will aim at conditioning a model-free policy on these latent variables for action prediction. Finally, we will test the generative model of the environment in the Dyna framework \citep{Sutton1991}.
+
+    Reinforcement learning (RL) allows to learn through the interaction with the environment: an agent controlled by a machine learning (ML) algorithm interacts with the world and develops a policy so as to maximise a reward. 
+    Traditional approaches to RL employed hand-designed state-spaces and tabular representations of policies, often based on state-visitation frequencies.
+    While useful in theory, this approach is infeasible for complex real-world problems in rich environments. 
+    On one hand, designing state-space by hand is difficult as it is not clear what features are important for a particular task or type of the environment. 
+    On the other hand, the state-space is either uncountable or too big to enumerate explicitly.
+%    
+    Model-free deep RL solves these issues by the means of function approximation with neural networks. 
+    It can learn representations from sensory inputs directly, thereby eliminating any need for state-space design, but it does it at a cost of a significant decrease in sample efficiency.
+    Model-based approaches can potentially improve sample-efficiency of RL algorithms, but they constrain the maximum achievable performance as the resulting policy can be only as good as the model.
+    Dyna, a framework combining model-free and model-based approaches introduced by \cite{Sutton1991}, can theoretically achieve optimal performance while using imperfect models of the environments for improved sample-efficiency.
+    In practice, it has been hard to use non-linear function approximators within Dyna, however.
+    Firstly, the further in future we predict, the lower the quality of the prediction due to increasing uncertainty. 
+    While it is true for both linear and non-linear models, the former can provide good uncertainty estimates, which can be used to correct the resulting bias in the predictions. 
+    Secondly, non-linear models are sample-inefficient and require significant amount of training before becoming useful. 
+    Before that happens, they can destabilise training of the model-free policy by providing inaccurate predictions.
+
+    While it is hard to provide high-quality predictions in the image space, especially over long time-horizons, it is not clear whether it is necessary, or whether all parts of the image have to be predicted with equal accuracy. 
+    Consider the task of assembling an object from its parts: 
+    there are several parts lying on a workbench and the goal is to arrange them in a specific configuration. 
+    While the exact appearance of the final scene or what is in the background does not matter, absolute poses and identities of object parts as well as relations between them do. 
+    It is interesting to ask whether we can build a non-parametric latent-variable model of the scene, where latent variables would explain objects and their poses and where the encoding length would depend on the number of objects in the scene (hence non-parametric).
+    Moreover, is it possible to perform prediction or a model-based simulation in the latent space, so as to circumvent deteriorating prediction quality, often visible in the image space? 
+    Finally, would it be possible to use such latent-space simulations within the Dyna framework, especially with a pre-trained dynamic model of the environment? 
+    It is worth noting that decomposing a scene into its constituent parts enforces conditional independence between objects given the scene, making it harder to implicitly reason about relations between objects. 
+    It begs asking the following question: does scene decomposition require to consider intra-object relations explicitly or is implicit treatment sufficient?
+
+    To answer the above questions, we would like to focus on the problem of state estimation, and specifically on approaches that 
+    (i) can perform multiple number of computation steps per input to support the variable-length representation of the scene, 
+    (ii) allow simulation in the absence of data and define prior distributions from which samples can be drawn when data are absent, 
+    (iii) support on-line training, which is necessary for a scalable use within the Dyna framework, 
+    (iv) estimate a Markovian state, since the environment in many real-world problems, especially involving robots, are partially-observable, 
+    (v) are stochastic and thereby able to generate multiple state-space trajectories from a single starting state, which accounts for imperfect information and encourages better state-space exploration necessary for sample-efficient learning of RL models.
     
-    The rest of this paper is structured as follows.
+    While there exist multiple approaches that meet the above requirements, we would like to focus on the recent advances in variational inference for neural networks.
+    Variational Autoencoders (VAE) allow building scalable generative latent-variable models of high-dimensional data, which is necessary for our task, and they have been shown to work with variable number of steps per input.  In contrast to standard neural networks, they are stochastic and they provide prior distributions on the latent representation. Unlike Gaussian Processes, they allow on-line training and at the same time the computational complexity of inference is independent of the size of the training set. 
+
+    The rest of this report is structured as follows.
     \Cref{sec:lit} covers prior work related to the areas in question.
-    I summarise the task of sequence prediction, describe relevant variants of unsupervised learning, investigate how model structure helps to learn abstract concepts from data and examine prior work on Dyna.
-    In \cref{sec:done}, I describe our work on object tracking and how it ties with my interests and the planned future work.
-%    \Cref{sec:proposal} details my future research plans, related risks and expected outcomes.
-    \Cref{sec:proposal} details how we are going to build a structured generative model of sequences and use it in model-based RL.
+    We summarise the task of sequence prediction, describe relevant variants of unsupervised learning, investigate how model structure helps to learn abstract concepts from data and examine prior work on model-based RL.
+    In \cref{sec:done}, We describe our work on object tracking and how it ties with our interests and the planned future work.
+    \Cref{sec:proposal} details how we are going to build a structured generative dynamics model and use it in reinforcement learning.
     \Cref{sec:conclusions} concludes this work.
+
+
+
+
+
+
+
+
+
+
+
+

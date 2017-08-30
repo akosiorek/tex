@@ -8,7 +8,7 @@
 %    As the problem is hard, we will start with a toy dataset of moving two-dimensional shapes, in order to extend it later to moving three-dimensional shapes in the presence of camera motion.
     %    In the later version I will focus on moving three-dimensional shapes in the presence of camera motion. 
     %    The final step is to improve the AIR model to work on images with rich backgrounds and real-world data, and then extending this modification to the generative models of moving object. 
-    Secondly, we are going to improve the AIR model to work on images with rich background and real-world data and then extend this modification to the generative model of moving objects. 
+    Secondly, we are going to improve the AIR model to work on images with rich background and real-world data and then extend this modification to a generative model of moving objects. 
 %    We expect that this will require a form of object/background segmentation or background subtraction and generative blending of objects and the background.
     Finally, we are going to investigate using trained generative models of videos within the Dyna framework.
     We now detail the above steps.
@@ -50,7 +50,7 @@
         Additionally, it is unclear which output probability distribution to use; output probability distribution in VAEs is responsible for the shape of the loss landscape. Gaussian assumption about prediction errors is not well justified when dealing with images and temporal dependencies between model outputs aggravate this issue even further. This issue might require further research (Generative Adversarial Networks might hold an answer; \cite{Wenzhe2016}) if satisfactory performance is to be attained. We expect this stage to take 4 to 6 months.
     
     \subsection{Model-based RL}
-        A good generative model of videos can be used for improving sample efficiency within the Dyna framework. Given difficulties with training non-linear models of environment, however, it is unclear whether this approach will work. A generative model of videos with variable-length encoding factorised between parts of the scene can be very useful in latent-space control algorithms similar to E2C, especially when any form of relational reasoning are required. In this case, the object-based representation deliver by AIR-like modelling can be married with structured reasoning models such as relational nets of \cite{Santoro2017} or the dynamic neural computer of \cite{Graves2016}.
+        A good generative model of videos can be used for improving sample efficiency within the Dyna framework. Given difficulties with training non-linear models of environment, however, it is unclear whether this approach will work. A generative model of videos with variable-length encoding factorised between parts of the scene can be very useful in latent-space control algorithms similar to E2C, especially when any form of relational reasoning is required. In this case, the object-based representation delivered by AIR-like modelling can be married with structured reasoning models such as relational nets of \cite{Santoro2017} or the dynamic neural computer of \cite{Graves2016}.
         
         
         We expect the final stage to take the remainder of this DPhil.
