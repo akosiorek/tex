@@ -1,113 +1,79 @@
 \section{Research Proposal}
 \label{sec:proposal}
 
-
-    During the remainder of this DPhil, we will develop a series of structured generative models of videos.
-    %    We are going to start by building a generative model of a moving object as an extension to the AIR framework.
-    Firstly, we are going to leverage recent advances in variational inference and neural networks to build a generative model of moving objects as an extension to the AIR framework. 
-%    As the problem is hard, we will start with a toy dataset of moving two-dimensional shapes, in order to extend it later to moving three-dimensional shapes in the presence of camera motion.
-    %    In the later version I will focus on moving three-dimensional shapes in the presence of camera motion. 
-    %    The final step is to improve the AIR model to work on images with rich backgrounds and real-world data, and then extending this modification to the generative models of moving object. 
-    Secondly, we are going to improve the AIR model to work on images with rich background and real-world data and then extend this modification to a generative model of moving objects. 
-%    We expect that this will require a form of object/background segmentation or background subtraction and generative blending of objects and the background.
-    Finally, we are going to investigate using trained generative models of videos within the Dyna framework.
-    We now detail the above steps.
+%\begin{enumerate}
+%    
+%    \item Is high-accuracy prediction of the whole image necessary for model-based RL, or are some parts more important?
+%    
+%    \item Can we build a non-parametric unsupervised latent-variable model of the scene, where latent variables explain objects and their poses and where the encoding length would depend on the number of objects in the scene (hence non-parametric)?
+%
+%    \item Is it possible to perform prediction or a model-based simulation in the latent space, so as to circumvent deteriorating prediction quality, often visible in the image space? 
+%    
+%    \item Is it possible to use such latent-space simulations within the Dyna framework, especially with a pre-trained model of the environment dynamics?
+%    
+%    \item Does scene decomposition require to consider intra-object relations explicitly or is implicit treatment sufficient?
+%\end{enumerate}
     
-    \subsection{A Generative Model of Moving Objects}
-        While AIR reconstructs an image by detecting objects present therein and painting one object at a time in a blank canvas, the generative model of moving objects (GMMO?) extends AIR to track objects by generating them one-at-a-time in a sequence of blank canvases.
-        To reconstruct an image, AIR decomposes it into a set of $\bz^{\mathrm{where}}$ and $\bz^{\mathrm{what}}$ latent variables, which describe location and appearance of an object, respectively.
-        The sequential model will need to take time-dependencies into account.
-        In particular, instead of directly using $\bz^{\mathrm{where}}$ and $\bz^{\mathrm{what}}$ inferred from an image $\bxt$ at time $t$ to reconstruct the image at time $t+1$, it will need to take into account the history of appearances and locations $\bzts$ at times 1 to t.
-        This can be accomplished by using a dynamics model, \eg an RNN. 
-        
-        Even though the modification to AIR looks simple, it is unclear whether this approach will work. Firstly. it is based on the assumption (like AIR) that the correlation between pixels within an object is much stronger than correlation between pixels inside and outside of the object. Secondly, this model is not allowed to peek at the image at time $t+1$ to reconstruct it, which severely increases the difficulty of the task. To address this issues, we are going to start simple, with a toy dataset of moving two-dimensional shapes. We will extend it later to moving three-dimensional shapes in the presence of camera motion.
-        
-        In the absence of data, the model allows simulation by updating the latent state $\bzt$ with samples drawn from a prior distribution $\p{\bz}$.
-        Choosing the right prior for a sequential task poses a research question by itself \citep{Soelch2016} and might require significant effort to answer.
-        The transition function of the dynamics model is another crucial component of the model. It defines dynamics in the latent space and it will determine whether the model adheres to the laws of physics.
-        %
-        We expect this stage to take about two to four months.
-        
-    \subsection{Generalisation of the AIR framework}
-        In order for the model to be useful in any real-world setting, it has to be able to handle video sequences with rich backgrounds and occluded objects. 
+    During the remainder of this DPhil, we will focus on answering the following question: How accurate does a model of the environment have to be in order to be useful in the context of model-based RL? Specifically, we are interested in finding out 
+    (i) whether it is possible to identify \emph{important} parts of the scene without any supervision, 
+    (ii) if simulating their dynamics separately and explicitly brings about any benefits and 
+    (iii) how relations between them affect the simulation.
+    To this end, we are going to develop a structured non-parametric generative latent-variable model of the environment dynamics.
+    By imposing a specific structure within the VAE framework, we can enforce scene decomposition by putting an \emph{appropriate} prior on the latent space, similar to AIR, and thereby gaining insight into what the model deems to be important.
+    Making the model non-parametric allows us to work with a variable number of objects, which allows tackling scenes and tasks of varying complexity.
+    It also enables us to simulate objects separately and analyse relations between them, thereby answering question (ii) and (iii).
+    Using a generative model is required by model-based RL, while at the same time providing insights into its internal workings: we can qualitatively evaluate samples generated by the model. 
+    To validate our endeavours, we are going to employ our generative model in the Dyna framework and use it in simulation in partially-observable environments involving robotics and/or computer games. We now detail the above.
+
+    \subsection{Generalisation of the Attend, Infer, Repeat framework}
+        The AIR framework can be seen as a non-parametric latent-variable generative model of images, which is very close to what we would like to develop.
+        It reconstructs an image by detecting objects present therein without supervision and paiting one object at a time in a blank canvas.
+        The original work showed it to work only in the context of plain backgrounds (black, in fact) and simple objects.
+        In order for the model to be useful in any real-world setting, it has to be able to handle images with rich backgrounds and occluded and complex objects. 
         We expect that this will require a form of object/background segmentation or background subtraction and generative blending of objects and the background.  
-%        If we assumed that the appearance of an object is known and is given by a vector $\bvt$, it is possible to segment it out of the image by using a dynamic filter network (DFN; \cite{Brabandere2016dfn}) in a very similar fashion to the dorsal stream of HART (\emph{cf.} section 3 in the paper).
         Given that AIR uses a spatial transformer \citep{Jaderberg2015} to draw objects in a canvas, it is straightforward to create an explanation mask, which marks which locations in the canvas has been drawn to. 
         When objects are explained, it should be possible to use the explanation mask with a complementary background model to explain the remainder of the image.
-%        It should be possible to use that mask with a complementary model that would explain the rest of the image.
         Separating reconstruction of the background and the objects might create discontinuities at the boundaries, however, and it is unclear how to prevent the background model from explaining the objects at the same time.
         It is our intuition that pixel correlations within objects are different than in the background or between objects and their neighbourhoods.
         If we parametrise background- and object-generating models with a minimum-length encoding scheme, it should force them to learn their problem-specific correlation structure, therefore forcing the parts of the scene to be explained by corresponding model components.
         Since the KL-divergence term in the VAE loss can be interpreted as an information-bottleneck \citep{Achille2016}, VAE effectively minimises encoding-length of the latent representation.
         
         We will start by working with a multi-MNIST dataset, similar to the one used by the original paper, but with a noisy background. 
-        The goal is to upscale the approach to real-world images and\eg ImageNet dataset. 
-        We expect this phase to take between 4 and 6 months.
+        The goal is to upscale the approach to real-world images and\eg ImageNet dataset.
+        At this point it is unclear whether the approach based on AIR will work. If it does not, we might have to introduce more structure by \eg image segmentation or employ semi-supervised learning instead of a purely unsupervised approach.
+        We expect this phase to take between 4 and 6 months and result in an article submitted to either IJCAI or ICML in February 2018.
+    
+    \subsection{A Generative Dynamical Model of Moving Objects}
+        Once we are able to detect salient parts of an image, we are going to focus on modelling environment dynamics in terms of dynamics of individual objects.
+        We will focus on developing a transition function in the latent space, so that the reconstruction after the transition will lead to prediction of the scene at the following time-step.
+        It will results in a model that is effectively able to track objects by generating them one-at-a-time in a sequence of blank canvases.
+        To reconstruct an image, AIR decomposes it into a set of $\bz^{\mathrm{where}}$ and $\bz^{\mathrm{what}}$ latent variables, which describe location and appearance of an object, respectively.
+        The sequential model will need to take time-dependencies into account.
+        In particular, instead of directly using $\bz^{\mathrm{where}}$ and $\bz^{\mathrm{what}}$ inferred from an image $\bxt$ at time $t$ to reconstruct the image at time $t+1$, it will need to take into account the history of appearances and locations $\bzts$ at times 1 to t.
+        This can be accomplished by using a learned dynamics model, \eg an RNN. 
+        In practice, the dynamics model should take into account actions executed by the agent, which might lead to transition functions similar to the ones of \cite{Watter2015} and \cite{Karl2017}.
+                
+        Even though the modification to AIR looks simple, it is unclear whether this approach will work. Firstly. it is based on the assumption (like AIR) that the correlation between pixels within an object is much stronger than correlation between pixels inside and outside of the object. Secondly, this model is not allowed to peek at the image at time $t+1$ to reconstruct it, which severely increases the difficulty of the task. To address this issues, we are going to start simple, with a toy dataset of moving two-dimensional shapes. We will extend it later to moving three-dimensional shapes in the presence of camera motion.
+        
+        In the absence of data, the model allows simulation by updating the latent state $\bzt$ with samples drawn from a prior distribution $\p{\bz}$.
+        Choosing the right prior for a sequential task poses a research question by itself \citep{Soelch2016} and might require significant effort to answer.
+        The transition function of the dynamics model is another crucial component of the model. It defines dynamics in the latent space and it will determine whether the model adheres to the laws of physics.
+        %
+        We expect this stage to take about two to four months and we expect that it will lead to a publication, possibly for NIPS, whose deadline is in May 2018.
+       
     
     \subsection{A Generative Model of Videos}
         Combining the generalised version of AIR with a generative model of moving objects will result in a structured generative model of image sequences. While simple in principle, we expect a number of issues to arise. Firstly, the moving object model does not take the background of the target image into account. We might have to modify the model to predict the background and use it to condition the locations of the objects in the target image; alternatively we can condition background generation on the object appearance and their location. 
         Secondly, training a high-fidelity model on video sequences is computationally very expensive due to the huge amounts of data this approach requires.
         Additionally, it is unclear which output probability distribution to use; output probability distribution in VAEs is responsible for the shape of the loss landscape. Gaussian assumption about prediction errors is not well justified when dealing with images and temporal dependencies between model outputs aggravate this issue even further. This issue might require further research (Generative Adversarial Networks might hold an answer; \cite{Wenzhe2016}) if satisfactory performance is to be attained. We expect this stage to take 4 to 6 months.
+        We would like to turn it into a publication for ICLR with the deadline in October 2018.
     
     \subsection{Model-based RL}
-        A good generative model of videos can be used for improving sample efficiency within the Dyna framework. Given difficulties with training non-linear models of environment, however, it is unclear whether this approach will work. A generative model of videos with variable-length encoding factorised between parts of the scene can be very useful in latent-space control algorithms similar to E2C, especially when any form of relational reasoning is required. In this case, the object-based representation delivered by AIR-like modelling can be married with structured reasoning models such as relational nets of \cite{Santoro2017} or the dynamic neural computer of \cite{Graves2016}.
-        
-        
+        With the above components ready, we will be in a position to answer the initial question about reinforcement learning:
+        how accurate does the model of the environment have to be?
+        We will attempt to use our object-centric dynamic model of the environment in the Dyna framework and compare it to baselines.
+        It will allow us to examine how does the non-parametric treatment of parts of the scene affect simulation within the RL context and whether object-centric representation is useful for a model-free policy and whether explicit reasoning about relations between objects is of importance.
+        By enforcing handling different parts of the scene by different model components, we will be able to examine how does the representation type of various parts of the scene affect performance of an RL agent. 
+        This approach has the potential for improving sample efficiency within the Dyna framework while granting improved interpretability. Given difficulties with training non-linear models of environment, however, it is unclear whether this approach will work. A generative model of videos with variable-length encoding factorised between parts of the scene can be very useful in latent-space control algorithms similar to E2C, especially when any form of relational reasoning is required. In this case, the object-based representation delivered by AIR-like modelling can be married with structured reasoning models such as relational nets of \cite{Santoro2017} or the dynamic neural computer of \cite{Graves2016}.
         We expect the final stage to take the remainder of this DPhil.
 
-
-
-
-
-
-
-
-%Things to write about:
-%\begin{itemize}
-%	\item Predictive Coding: next-frame prediction with VAEs, it's normalisation behaviour, inner feedback loop for corrections
-%	\item Model-based RL: sample efficiency, using a policy to improve learning speed of the perception module, learn a policy in the absence of a goal
-%	\item Unsupervised object tracking \& detection
-%\end{itemize}
-
-%    Drawing from my experiences with HART, I am going to focus on representation learning for videos. I believe that imposing a specific model structure can lead to better, easier and faster learning and that generative modelling is able to produce neural representations that are easily transferable to other tasks. To this end, I would like to explore the predictive coding paradigm, or rather its instantiation within the variational inference framework. 
-%    Going further, I believe it is possible to combine attentive recurrent tracking with an approach similar to AIR \citep{Eslami2016} to create a generative model of a moving object, capable of inferring intuitive physics without any supervision.
-%    Finally, I would like to merge these two branches to learn a model of the environment and use it in a model-based reinforcement learning. In the following, I will describe the three ideas, explore connections between them and evaluate associated risks.    
-%    
-%\subsection{Variational Inference for Predictive Coding}
-%\label{sec:pred}
-%   
-%   Predictive coding describes a family of models for sequence prediction. If a sequence predictor has a hidden state, one can argue that this state should be updated only in case of imperfect predictions, see \cref{sec:seq_mode} for details. \cite{Friston2009guide} argues that this type of sequence modelling is employed in the human brain, where it explains phenomena related to learning. He also represents the view that the brain is Bayesian and that any prediction in the human brain has to be probabilistic. In this case, the model can be optimised by minimising the information-theoretic surprise and the prediction error can be generalised to Mahalanobis distance \wrt the predictive probability distribution. This approach has not been explored in the machine learning literature, and yet it gives rise to a family of models shaped after the VAE, but reformulated for prediction as opposed to reconstruction of the input. This formulation has several advantages, including:
-%    \begin{description}
-%        \item[Non-stationary priors] A probabilistic prediction of the activations in the latent space can be used as a prior for the latent encoding at the next time-step. It maintains its properties as a regulariser while admitting higher flexibility of the approximate posterior distribution.
-%        
-%        \item[Self-normalisation] Probabilistic predictive coding can be used for normalisation of activations of neural networks. Given that we minimise surprise as the learning criterion, and assuming Gaussian output probability distribution, we can use the statistics of the distribution to whiten latent encoding at layer $l$ before inputting it to layer $l+1$. It can potentially alleviate or even solve the problem of covariance shift in the encoder part of the model, therefore removing any need for explicit normalisation (\eg batch normalisation). The validity of this argument is supported by the successful usage of neural baselines for variance reduction in score-function estimators \citep{Mnih2014}. It is unclear how normalisation of the encoder will impact learning of the whole system, nor whether it is possible to devise a similar method of normalising the decoder activations.
-%    \end{description}
-%    While not revolutionary in itself, the predictive coding paradigm imposes structure on the model and constrains the optimisation problem, potentially leading to faster and more sample-efficient learning.
-%
-%\subsection{Unsupervised Learning to Track Objects}
-%\label{sec:obj}
-%
-%    One can define an object in the image space as a patch of an image, where the correlation between pixels within the patch is strong, while the correlation between pixels inside and outside of the patch is weak. This definition, together with the penalty on the encoding length in the latent space, is in fact what makes AIR work. We can extend this definition to video sequences, where correlation between pixels in patches representing the same object at consecutive time-steps should be high under the assumption of high-enough frame rate. If video frames contain only simple objects on plain background, we can reformulate AIR for frame prediction instead of reconstruction to form a generative model of moving objects. This approach is unlikely to work with rich backgrounds or when an object constitutes only a small part of the scene, however. I believe that these issues can be addressed by background subtraction and soft visual attention, respectively. 
-%    
-%    \subsubsection{Background Subtraction}
-%    
-%        Assuming that the appearance of the object is known and is given by a vector $\bvt$, it is possible to segment it out of the image by using a dynamic filter network (DFN; \cite{Brabandere2016dfn}) in a very similar fashion to the dorsal stream of HART. Moreover, this segmentation model can be easily pre-trained (as proved by unpublished preliminary experiments) in an unsupervised way by cropping two overlapping patches from an image, treating one of them as the object and trying to find it within the second patch. If we assume that the initial tight bounding box is available (ground-truth, provided by an external object detector or AIR), we can easily extract the appearance vector.
-%    
-%    \subsubsection{Visual Attention}
-%        If the object is small relative to the image, background subtraction is unlikely to work due to the potentially large amount of noise in the segmentation. We can address this issue by using soft visual attention to crop the object or a small area around it from the image. This approach requires attention parameters, which can be initialised from the bounding box for the first frame or inferred from the sequence seen so far. 
-%  
-%    Given an attention glimpse $\bgt$ at time $t$ and an appearance vector $\bvt$, we can create an object mask $\bmt$ and compute a masked version of the glimpse $\bgt^m = \bmt \odot \bgt$, where $\odot$ denotes the Hadamard product. Given two masked glimpses at times $t$ and $t+1$, we can predict $\bg_{t+1}^m$ from $\bgt^m$ by using an AIR-like model.
-%    
-%    To drive learning, we can minimise the prediction loss of $\bg_{t+1}^m$ while maximising the area of the object mask $\bmt$ in the image space at the same time. The trade-off here is that $\bgt^m$ represents the appearance of the object and only the object, therefore it cannot be used to predict anything but the object at the next time-step; therefore minimising the prediction loss will also minimise the positive area of the object mask. Maximising the object mask area will prevent it from shrinking to zero. It will also, together with minimisation of the prediction loss, encourage accurate prediction of attention parameters, since if the attention glimpse does not contain the object it is virtually impossible to predict anything in or segment that glimpse.
-%    
-%    By combining all of the above, we arrive at a generative model of a moving object, which includes the motion model as well as the appearance model, both conditioned on the image background. Since the model is generative, we can condition it on a short video sequence and generate multiple trajectories in the image space by sampling from the prior; we can therefore examine the model for visual fidelity as well as physical plausibility of the generated paths. One caveat here is that the model will generate only the moving object, without its background. It might be necessary to use an additional component for background prediction, possibly conditioned on the predicted objects.
-%
-%\subsection{Model-based Reinforcement Learning}
-%
-%    Predicting the next time-step in a structured manner might prove to be an effective way of representation learning. If a model learns intuitive physics directly from data, it can be useful model-based reinforcement learning. It remains to ask whether we can make the learning of the model faster, more general or more efficient by coupling it with an agent which can interact with its environment. Specifically, I would like to investigate the following:
-%    \begin{enumerate}
-%        \item Is it possible to use a policy for surprise-maximisation in a predictive coding setting? Can it lead to faster learning by exposing the model to otherwise rare events? 
-%        \item Can a surprise-minimisation policy be used in the absence of any explicit goal? How to avoid degenerate solutions in this case?
-%        \item Does predicting the next time-step lead to faster learning in RL, especially when rewards are sparse? Does it encourage or discourage exploration?
-%    \end{enumerate} 
-%    Approaches described in \cref{sec:obj,sec:pred} can be used for model learning in a model-based reinforcement learning setting. They can be used for pretraining or as unsupervised auxiliary tasks. While interactions between proposed methods and reinforcement learning remain unknown, they can potentially improve sample efficiency and scalability of reinforcement learning approaches and I am interested in exploring this topic.
