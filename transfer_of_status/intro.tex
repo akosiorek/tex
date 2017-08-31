@@ -33,7 +33,7 @@
     On the other hand, the state-space is either uncountable or too big to enumerate explicitly.
 %    
     Model-free deep RL solves these issues by the means of function approximation with neural networks. 
-    It can learn representations from sensory inputs directly, thereby eliminating any need for state-space design, but it does it at a cost of a significant decrease in sample efficiency.
+    It can learn representations from sensory inputs \eg images, directly, thereby eliminating any need for state-space design, but it does it at a cost of a significant decrease in sample efficiency.
     Model-based approaches can potentially improve sample-efficiency of RL algorithms, but they constrain the maximum achievable performance as the resulting policy can be only as good as the model.
     Dyna, a framework combining model-free and model-based approaches introduced by \cite{Sutton1991}, can theoretically achieve optimal performance while using imperfect models of the environments for improved sample-efficiency.
     In practice, it has been hard to use non-linear function approximators within Dyna, however.
@@ -46,21 +46,21 @@
     Consider the task of assembling an object from its parts: 
     there are several parts lying on a workbench and the goal is to arrange them in a specific configuration. 
     While the exact appearance of the final scene or what is in the background does not matter, absolute poses and identities of object parts as well as relations between them do. 
-    It is interesting to ask whether we can build a non-parametric latent-variable model of the scene, where latent variables would explain objects and their poses and where the encoding length would depend on the number of objects in the scene (hence non-parametric).
+    It is interesting to ask whether we can build a non-parametric unsupervised latent-variable model of the scene, where latent variables would explain objects and their poses and where the encoding length would depend on the number of objects in the scene (hence non-parametric).
     Moreover, is it possible to perform prediction or a model-based simulation in the latent space, so as to circumvent deteriorating prediction quality, often visible in the image space? 
-    Finally, would it be possible to use such latent-space simulations within the Dyna framework, especially with a pre-trained dynamic model of the environment? 
-    It is worth noting that decomposing a scene into its constituent parts enforces conditional independence between objects given the scene, making it harder to implicitly reason about relations between objects. 
+    Finally, would it be possible to use such latent-space simulations within the Dyna framework, especially with a pre-trained model of the environment dynamics? 
+    It is worth noting that decomposing a scene into its constituent parts might enforce conditional independence properties between the objects and/or the scene, making it harder to implicitly reason about existing relations. 
     It begs asking the following question: does scene decomposition require to consider intra-object relations explicitly or is implicit treatment sufficient?
 
-    To answer the above questions, we would like to focus on the problem of state estimation, and specifically on approaches that 
+    To answer the above questions, we would like to focus on the problem of unsupervised state estimation via generative modelling, and specifically on approaches that 
     (i) can perform multiple number of computation steps per input to support the variable-length representation of the scene, 
     (ii) allow simulation in the absence of data and define prior distributions from which samples can be drawn when data are absent, 
     (iii) support on-line training, which is necessary for a scalable use within the Dyna framework, 
-    (iv) estimate a Markovian state, since the environment in many real-world problems, especially involving robots, are partially-observable, 
+    (iv) estimate a Markovian state, since the environment in many real-world problems, especially involving robots, is partially-observable, 
     (v) are stochastic and thereby able to generate multiple state-space trajectories from a single starting state, which accounts for imperfect information and encourages better state-space exploration necessary for sample-efficient learning of RL models.
     
     While there exist multiple approaches that meet the above requirements, we would like to focus on the recent advances in variational inference for neural networks.
-    Variational Autoencoders (VAE) allow building scalable generative latent-variable models of high-dimensional data, which is necessary for our task, and they have been shown to work with variable number of steps per input.  In contrast to standard neural networks, they are stochastic and they provide prior distributions on the latent representation. Unlike Gaussian Processes, they allow on-line training and at the same time the computational complexity of inference is independent of the size of the training set. 
+    Variational Autoencoders allow building scalable generative latent-variable models of high-dimensional data, which is necessary for our task, and they have been shown to work with variable number of steps per input.  In contrast to standard neural networks, they are stochastic and they provide prior distributions on the latent representation. Unlike Gaussian Processes, they allow on-line training and at the same time the computational complexity of inference is independent of the size of the training set. 
 
     The rest of this report is structured as follows.
     \Cref{sec:lit} covers prior work related to the areas in question.
