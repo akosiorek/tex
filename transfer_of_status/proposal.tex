@@ -39,21 +39,24 @@
         Since the KL-divergence term in the VAE loss can be interpreted as an information-bottleneck \citep{Achille2016}, VAE effectively minimises encoding-length of the latent representation.
         
         We will start by working with a multi-MNIST dataset, similar to the one used by the original paper, but with a noisy background. 
-        The goal is to upscale the approach to real-world images and\eg ImageNet dataset.
-        At this point it is unclear whether the approach based on AIR will work. If it does not, we might have to introduce more structure by \eg image segmentation or employ semi-supervised learning instead of a purely unsupervised approach.
+        The goal is to upscale the approach to real-world images and\eg ImageNet dataset \citep{Russakovsky2015}.
+        At this point it is unclear whether the approach based on AIR will work. If it does not, we might have to introduce more structure by\!\eg image segmentation or employ semi-supervised learning instead of a purely unsupervised approach.
         We expect this phase to take between 4 and 6 months and result in an article submitted to either IJCAI or ICML in February 2018.
     
     \subsection{A Generative Dynamical Model of Moving Objects}
         Once we are able to detect salient parts of an image, we are going to focus on modelling environment dynamics in terms of dynamics of individual objects.
         We will focus on developing a transition function in the latent space, so that the reconstruction after the transition will lead to prediction of the scene at the following time-step.
-        It will results in a model that is effectively able to track objects by generating them one-at-a-time in a sequence of blank canvases.
+        It will result in a model that is effectively able to track objects by generating them one-at-a-time in a sequence of blank canvases.
         To reconstruct an image, AIR decomposes it into a set of $\bz^{\mathrm{where}}$ and $\bz^{\mathrm{what}}$ latent variables, which describe location and appearance of an object, respectively.
         The sequential model will need to take time-dependencies into account.
         In particular, instead of directly using $\bz^{\mathrm{where}}$ and $\bz^{\mathrm{what}}$ inferred from an image $\bxt$ at time $t$ to reconstruct the image at time $t+1$, it will need to take into account the history of appearances and locations $\bzts$ at times 1 to t.
-        This can be accomplished by using a learned dynamics model, \eg an RNN. 
+        This can be accomplished by using a learned dynamics model\!\eg an RNN. 
         In practice, the dynamics model should take into account actions executed by the agent, which might lead to transition functions similar to the ones of \cite{Watter2015} and \cite{Karl2017}.
                 
-        Even though the modification to AIR looks simple, it is unclear whether this approach will work. Firstly. it is based on the assumption (like AIR) that the correlation between pixels within an object is much stronger than correlation between pixels inside and outside of the object. Secondly, this model is not allowed to peek at the image at time $t+1$ to reconstruct it, which severely increases the difficulty of the task. To address this issues, we are going to start simple, with a toy dataset of moving two-dimensional shapes. We will extend it later to moving three-dimensional shapes in the presence of camera motion.
+        Even though the modification to AIR looks simple, it is unclear whether this approach will work. 
+        Firstly, it is based on the assumption (like AIR) that the correlation between pixels within an object is much stronger than correlation between pixels inside and outside of the object.
+        Secondly, this model is not allowed to peek at the image at time $t+1$ to reconstruct it, which severely increases the difficulty of the task. 
+        To address these issues, we are going to start simple, with a toy dataset of moving two-dimensional shapes. We will extend it later to moving three-dimensional shapes in the presence of camera motion.
         
         In the absence of data, the model allows simulation by updating the latent state $\bzt$ with samples drawn from a prior distribution $\p{\bz}$.
         Choosing the right prior for a sequential task poses a research question by itself \citep{Soelch2016} and might require significant effort to answer.
@@ -66,14 +69,14 @@
         Combining the generalised version of AIR with a generative model of moving objects will result in a structured generative model of image sequences. While simple in principle, we expect a number of issues to arise. Firstly, the moving object model does not take the background of the target image into account. We might have to modify the model to predict the background and use it to condition the locations of the objects in the target image; alternatively we can condition background generation on the object appearance and their location. 
         Secondly, training a high-fidelity model on video sequences is computationally very expensive due to the huge amounts of data this approach requires.
         Additionally, it is unclear which output probability distribution to use; output probability distribution in VAEs is responsible for the shape of the loss landscape. Gaussian assumption about prediction errors is not well justified when dealing with images and temporal dependencies between model outputs aggravate this issue even further. This issue might require further research (Generative Adversarial Networks might hold an answer; \cite{Wenzhe2016}) if satisfactory performance is to be attained. We expect this stage to take 4 to 6 months.
-        We would like to turn it into a publication for ICLR with the deadline in October 2018.
+        We would like to turn it into a publication for ICLR or CVPR with the respective deadlines in October and November 2018.
     
     \subsection{Model-based RL}
         With the above components ready, we will be in a position to answer the initial question about reinforcement learning:
         how accurate does the model of the environment have to be?
         We will attempt to use our object-centric dynamic model of the environment in the Dyna framework and compare it to baselines.
-        It will allow us to examine how does the non-parametric treatment of parts of the scene affect simulation within the RL context and whether object-centric representation is useful for a model-free policy and whether explicit reasoning about relations between objects is of importance.
-        By enforcing handling different parts of the scene by different model components, we will be able to examine how does the representation type of various parts of the scene affect performance of an RL agent. 
+        It will allow us to examine how does the non-parametric treatment of parts of the scene affect simulation within the RL context, whether object-centric representation is useful for a model-free policy and if explicit reasoning about relations between objects is of importance.
+        As the model is going to have background-explaining and object-centric components, we will be able to \emph{force} explaining parts of the image by one of the components: this will help to answer the question of how different types of representation (fixed-length or variable-length) of various parts of the scene affect performance of an RL agent.
         This approach has the potential for improving sample efficiency within the Dyna framework while granting improved interpretability. Given difficulties with training non-linear models of environment, however, it is unclear whether this approach will work. A generative model of videos with variable-length encoding factorised between parts of the scene can be very useful in latent-space control algorithms similar to E2C, especially when any form of relational reasoning is required. In this case, the object-based representation delivered by AIR-like modelling can be married with structured reasoning models such as relational nets of \cite{Santoro2017} or the dynamic neural computer of \cite{Graves2016}.
         We expect the final stage to take the remainder of this DPhil.
 
