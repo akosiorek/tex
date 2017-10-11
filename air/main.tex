@@ -1,0 +1,116 @@
+\documentclass[]{article}
+
+\usepackage{amsmath}            % align env for aligned equations
+\usepackage{enumitem}           % needed for leftmargin ident of the description env
+\usepackage{bm}                 % uniform bold with \bm
+\usepackage{txfonts}            % conditional independence symbo
+
+
+\include{nonpaperheader}
+\usepackage{mlmacros}
+
+
+
+%opening
+\title{Attend, Infer, Repeat: Notes}
+\author{Adam Kosiorek}
+
+
+\variables{s,x,y,z}
+\probdists{p,q}
+
+\addbibresource{\string~/Documents/.bib/library.bib}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+
+    Attend, Infer, Repeat (AIR; \cite{Eslami2016}) is a VAE-type model capable of decomposing a static scene into its constituent parts. This is useful, since it explicitly represent distinct parts of the scene, which provides useful and actionable representations for down-stream processing. An example application are proposal location for object detection algorithms. While not guaranteed to represent objects, parts of the scene represented by separate representations are bound to be statistically significant. The purpose of this document is to explore the model in more detail.
+    
+\section{Generative Model and Priors}
+
+    Let $\bx$ an image, $n$ a number of statistically interesting separate parts in the image, $\bz = \{\bz^i, \dots, \bz^n \}$ a group of variables, where each variable describes a part of the scene. Let $\p{\bz, n}{}{\theta} = \p{\bz}{n}{\theta}\p{n}{}{\theta}$ be a prior over latent variables describing our assumptions about possible layouts and complexity of the scene and let $\p{\bx}{\bz}{\theta}$ be a \emph{generating} model. The prior and the generating model together form a generative model of the scene, where the prior describes it in terms of latent variables and the generating model uses the latent variables to paint the scene. We can write down the marginal distribution of images as 
+    \begin{equation}
+        \p{\bx}{}{\theta} = \sum_{n=1}^N \p{n}{}{\theta, N} \int \p{\bz}{n}{\theta} \p{\bx}{\bz}{\theta} \dint \bz.
+    \end{equation}
+    We take the prior to have the following form:
+    \begin{equation}
+        \p{n}{}{\theta} = \mathrm{Geom} (n \mid \theta),
+    \end{equation}
+    \begin{equation}
+        \p{\bz}{n}{\theta} = \prod_{i=1}^n \p{\bz^i}{}{\theta} = \prod_{i=1}^n \gauss{\bf{0}, \bf{I}},
+    \end{equation}
+    which assumes that $\bz^i$ are independent under the prior. The success probability for the geometric distribution is chosen to encourage sparse (as few steps as possible) solutions. In practice, it is annealed over 100k training steps to a very low value on the order of $p = 10^{-e}$,  $e \in [5, 10]$.
+    
+\section{Inference through an Approximate Posterior}
+    
+    Since the latent variables $\bz^i$ are independent under the prior, they are exchangeable. It introduces symmetries, which increases the volume of the search space in a combinatorial way. To address this issue, the original work formulates inference as a sequential problem, where latent variables describing a part of a scene depend on previously inferred latent variables. Specifically, it parametrises $n$ as a vector of $n$ ones followed by a zero $\bz^p$. With this representation and a sequential implementation of inference, it is enough to output a single \emph{presence} indicator variable at each processing step. The approximate posterior is given by
+    \begin{equation}
+        \q{\bz, \bz^p}{\bx}{\theta} = \q{z^{p, n+1} = 0}{\bz^{1:n}, \bx}{\phi} \prod_{i=1}^n \q{\bz^i, z^{p, i} = 1}{\bz^{1:i-1}, \bx}{\phi},
+    \end{equation}
+    with $q_\phi$ implemented as a neural network. To avoid explaining the same object twice, it is vital to capture the dependency $bz^i, z^{p, i} \mid \bz^{1:i-1}, \bx$, which is implemented as a recurrent neural network $R_\phi$ with hidden state $\bm{h}^i$, where the initial hidden state $\bm{h}^0$ is randomly initialised and learnable, and specifically as
+    \begin{equation}
+        \omega^i, \bm{h}^i = R_\phi (\bx, \bf{h}^{i-1}).
+    \end{equation}
+    The variable $\omega^i$ specifies parameters of the probability distribution over $\bz^i$ and $z^{p, i}$ and introduces a conditional independence property, namely $\bz^i \Perp z^{p, i} \mid \omega^i$. We can use this property to factorise the approximate posterior distribution as
+    \begin{equation}
+          \q{\bz, \bz^p}{\bx}{\theta} = \q{z^{p, n+1} = 0}{\omega^{n+1}}{\phi} \prod_{i=1}^n \q{\bz^i}{\omega^i}{\phi} \q{z^{p, i}}{\omega^i}{\phi}.
+    \end{equation}
+    Since the hidden state $bm{h}^i$ does not depend on the latent variables, there is no need to integrate over the hidden state. All of the distribution parameters $\omega$ are computed before any of the distributions is used or even instantiated. That hints at what the implementation might look like: a recurrent neural network should compute the parameters of all the probability distributions, but all sampling can be done outside in a feed-forward fashion.
+    
+    
+\section{Learning by Maximising the ELBO}
+    
+    AIR is trained by maximising the evidence lower bound $\loss[AIR]$ (ELBO) given by
+    \begin{align}
+        \loss[AIR]{\phi, \theta} &= \expc{ \log \frac{ \p{\bz, n, \bx}{}{\theta} }{ \q{\bz, n}{\bx}{\phi} } }{}{ \q{}{}{\phi} }\\
+        &= \expc{ \log \p{\bx}{\bz}{\theta} }{}{ \q{}{}{\phi} } - \kl{\q{\bz, n}{\bx}{\phi}}{\p{\bz, n}{}{\theta}}.
+    \end{align}
+    The first term is a probabilistic analog of the reconstruction error, while the second term is a complexity penalty. In this case in encourages minimum-length encoding of every part of the scene as well as decomposing the scene into a minimal number of parts. The KL term can be rewritten  according to the product rule as
+    \begin{align}
+        &\kl{\q{\bz, n}{\bx}{\phi}}{\p{\bz, n}{}{\theta}} =\\
+        &\qquad= \kl{\q{n}{\bx}{\phi}}{\p{n}{}{\theta}} + \expc{ \kl{\q{\bz}{n, \bx}{\phi} }{ \p{\bz}{n}{\theta} } }{}{\q{n}{\bx}{\phi}}.
+    \end{align}
+
+\section{Policy Gradient Techniques}
+    Policy gradients are used here to backprop through samples from a discrete probability distribution.
+    \subsection{Score Function}
+        \cite{Williams1992}
+        
+    \subsection{NVIL}
+        \cite{Mnih2014} implemented but doesn't work that well, presumably because of different effective weightings of the continuous and discrete components of the loss. I still have to check with the lower learning rate.
+        
+    \subsection{Discrete IWAE}
+        To be done... Originally introduced by \cite{Burda2015}, but extended to a discrete case by \cite{Tucker2017}.
+        
+    \subsection{Convex Relaxation}
+        To be done... concrete distribution/gumbel \cite{Maddison2016,Jang2016}
+        
+    \subsection{REBAR}
+        This seems terribly complicated \cite{Tucker2017}
+        
+\section{Complex Backgrounds: Behaviour and Extenstions}
+
+    AIR depends on statistical differences between pixels belonging to an object and the ones belonging to the background. Moreover, the way it has been defined, it can reconstruct only objects while neglecting the background completely. It is natural to expect that it simply wouldn't work in the case of non-empty backgrounds. To mitigate this issue, it is necessary to augment the model with a background-explaining component $g$. In a simple case, it could produce a background $\bm{b}$ based on the last hidden state of the controller RNN $R_\phi$, specifically:
+    \begin{align}
+        \bm{b} &= g_\phi( \bm{(h}^N )\\
+        y &= h^{\mathrm{dec}}( \bz, \bm{b})
+    \end{align}
+    For the case of MNIST, $g$ can be implemented as a simple MLP. For more complicated model, it would have to be a more complicated model based on up-convolutions, but this is also true about the glimpse decoder.
+    \todo[inline]{Design an experiment to test this behaviour.}
+
+\section{An Extension to Timeseries}
+    AIR displays an inconsistent behaviour depending on initialisation. It is randomly initialised and it tends to converge to different solutions when training is restarted. Only a small subset of the solutions is close to what the user would want, namely explaining one object at a time. This is understandable, since a dataset of single images cannot encode an \emph{consistency} prior, whereby objects would have to be preserved when they move. Extending AIR to sequential data has a potential of solving this issue, since it should be much easier to explain an object by changing its position parameter than to inferring its appearance description from scratch at every time-step. Moreover, it prevents explaining two objects moving separately with a single glimpse, since it would be impossible to preserve them consistently while reconstructing.
+    
+    An extension to timeseries is not trivial, however. It requires some form of dependency between consecutive timestep. It is important to distinguish temporal and within-timestep dependencies. We dub the latter \emph{sequential} dependencies. In the original work, the only sequential dependencies exist between the hidden states $\bm{h}^i \mid \bm{h}^{i-1}$ and the presence variables $z^{p, i} \mid z^{p, 1:i-1}$, while there is no sequential dependence between appearance and position $\bz^i$. A temporal version of the algorithm requires (or might benefit from)
+    \begin{itemize}
+        \item between-timestep hidden state dependence, \eg $\bm{h}^t \mid \bm{h}^{t-1}$
+    \end{itemize}
+    
+    
+	\printbibliography
+
+\end{document}
