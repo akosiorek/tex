@@ -59,7 +59,7 @@
     \begin{equation}
           \q{\bz, \bz^p}{\bx}{\theta} = \q{z^{p, n+1} = 0}{\omega^{n+1}}{\phi} \prod_{i=1}^n \q{\bz^i}{\omega^i}{\phi} \q{z^{p, i}}{\omega^i}{\phi}.
     \end{equation}
-    Since the hidden state $bm{h}^i$ does not depend on the latent variables, there is no need to integrate over the hidden state. All of the distribution parameters $\omega$ are computed before any of the distributions is used or even instantiated. That hints at what the implementation might look like: a recurrent neural network should compute the parameters of all the probability distributions, but all sampling can be done outside in a feed-forward fashion.
+    Since the hidden state $\bm{h}^i$ does not depend on any of the latent variables, there is no need to integrate over the hidden state \todo{check with the STORN paper}. All of the distribution parameters $\omega$ are computed before any of the distributions is used or even instantiated. That hints at what the implementation might look like: a recurrent neural network should compute the parameters of all the probability distributions, but all sampling can be done outside in a feed-forward fashion.
     
     
 \section{Learning by Maximising the ELBO}
@@ -69,7 +69,7 @@
         \loss[AIR]{\phi, \theta} &= \expc{ \log \frac{ \p{\bz, n, \bx}{}{\theta} }{ \q{\bz, n}{\bx}{\phi} } }{}{ \q{}{}{\phi} }\\
         &= \expc{ \log \p{\bx}{\bz}{\theta} }{}{ \q{}{}{\phi} } - \kl{\q{\bz, n}{\bx}{\phi}}{\p{\bz, n}{}{\theta}}.
     \end{align}
-    The first term is a probabilistic analog of the reconstruction error, while the second term is a complexity penalty. In this case in encourages minimum-length encoding of every part of the scene as well as decomposing the scene into a minimal number of parts. The KL term can be rewritten  according to the product rule as
+    The first term is a probabilistic analog of the reconstruction error, while the second term is a complexity penalty. In this case it encourages minimum-length encoding of every part of the scene as well as decomposing the scene into a minimal number of parts. The KL term can be rewritten  according to the product rule as
     \begin{align}
         &\kl{\q{\bz, n}{\bx}{\phi}}{\p{\bz, n}{}{\theta}} =\\
         &\qquad= \kl{\q{n}{\bx}{\phi}}{\p{n}{}{\theta}} + \expc{ \kl{\q{\bz}{n, \bx}{\phi} }{ \p{\bz}{n}{\theta} } }{}{\q{n}{\bx}{\phi}}.
@@ -105,9 +105,13 @@
 \section{An Extension to Timeseries}
     AIR displays an inconsistent behaviour depending on initialisation. It is randomly initialised and it tends to converge to different solutions when training is restarted. Only a small subset of the solutions is close to what the user would want, namely explaining one object at a time. This is understandable, since a dataset of single images cannot encode an \emph{consistency} prior, whereby objects would have to be preserved when they move. Extending AIR to sequential data has a potential of solving this issue, since it should be much easier to explain an object by changing its position parameter than to inferring its appearance description from scratch at every time-step. Moreover, it prevents explaining two objects moving separately with a single glimpse, since it would be impossible to preserve them consistently while reconstructing.
     
-    An extension to timeseries is not trivial, however. It requires some form of dependency between consecutive timestep. It is important to distinguish temporal and within-timestep dependencies. We dub the latter \emph{sequential} dependencies. In the original work, the only sequential dependencies exist between the hidden states $\bm{h}^i \mid \bm{h}^{i-1}$ and the presence variables $z^{p, i} \mid z^{p, 1:i-1}$, while there is no sequential dependence between appearance and position $\bz^i$. A temporal version of the algorithm requires (or might benefit from)
+    An extension to timeseries is not trivial, however. It requires some form of dependency between consecutive timestep. It is important to distinguish temporal and within-timestep dependencies. We dub the latter \emph{sequential} dependencies. In the original work, the only sequential dependencies exist between the hidden states $\bm{h}^i \mid \bm{h}^{i-1}$ and the presence variables $z^{p, i} \mid z^{p, 1:i-1}$, while there is no sequential dependence between appearance and position $\bz^i$. A temporal version of the algorithm requires (or might benefit from) the following:
     \begin{itemize}
-        \item between-timestep hidden state dependence, \eg $\bm{h}^t \mid \bm{h}^{t-1}$
+        \item between-timestep hidden state dependence \eg $\bm{h}^t \mid \bm{h}^{t-1}$, where this timestep might or might not be the same as the sequential hidden state
+        \item temporal dependence on object position
+        \item temporal dependence on object appearance
+        \item temporal dependence on object presence
+        
     \end{itemize}
     
     
