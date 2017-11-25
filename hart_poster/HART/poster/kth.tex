@@ -1,0 +1,32 @@
+\mysection{Pedestrian Tracking: KTH Dataset [2]}
+
+\vspace{1\baselineskip}
+
+\begin{minipage}[c]{0.3\textwidth}
+    \centering
+    \vspace{-1.5em}
+    \begin{tikzpicture}
+    \draw[line width=1mm, ->] (-10, 0) -- node[above] {time} (10, 0);
+    \end{tikzpicture}
+    \includegraphics[width=\textwidth]{kth_overlay_16}
+    
+    \begin{minipage}[c]{0.6\textwidth}
+        \begin{itemize}
+            \item Attention, prediction and ground-truth overlap at initialization
+            \item Every $16^{th}$ frame of the sequence at 25 fps.
+            \item $2^{nd}$ row shows attention glimpses multiplied with appearance attention
+        \end{itemize}
+    \end{minipage}\hfill   
+    {\large
+    \begin{minipage}[c]{0.39\textwidth}
+        \begin{tabular}{c|c}
+            \multicolumn{2}{c}{Intersection over Union}\\
+            Kahou \emph{et. al.} [1] & Ours\\
+            \midrule
+            55.03\% & 77.11\%
+        \end{tabular}
+    \end{minipage}
+}
+    \vspace{.5em}
+\end{minipage}
+

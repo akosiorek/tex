@@ -1,0 +1,39 @@
+\mysection{Loss}
+\vspace{.5\baselineskip}
+    \centering
+    Directly optimise Intersection-over-Union (IoU) and guide attention mechanisms.
+%\begin{equation*}
+%\loss[\mathrm{HART}]{\cdot} = \lambda_{\mathrm{t}} \loss[\mathrm{t}]{\cdot} + \lambda_{\mathrm{s}} \loss[\mathrm{s}]{\cdot} + \lambda_{\mathrm{a}} \loss[\mathrm{a}]{\cdot}  + \reg{ \B{\lambda} } + \beta \reg{ \cdot }
+%\end{equation*}
+\begin{equation*}
+\loss[\mathrm{HART}]{\cdot} = \lambda_{\mathrm{t}} \loss[\mathrm{t}]{\cdot} + \lambda_{\mathrm{s}} \loss[\mathrm{s}]{\cdot} + \lambda_{\mathrm{a}} \loss[\mathrm{a}]{\cdot} + \beta \reg{ \cdot }
+\end{equation*}
+
+\begin{description}[leftmargin=\parindent,labelsep=1em]
+
+\item[Tracking:] Negative log of Intersection-over-Union.
+\begin{equation*}
+    \loss[\mathrm{t}]{\data, \theta} = \expc[\p{\widehat{\bb}_{1:T}}{\bxTs, \bb_1}]{ -\log \mathrm{IoU} \fences{\widehat{\bb}_t, \bbt}}
+\end{equation*}
+
+\item[Spatial Attention:] It follows the object, but shouldn't be too big.
+\begin{equation*}
+    \loss[\mathrm{s}]{\data, \theta} = \expc[\p{\baTs}{\bxTs, \bb_1}]{ -\log \fences*{\frac{ \bat \cap \bbt }{\mathrm{area}\fences{\bbt}} } -\log \fences { 1 - \mathrm{IoU} \fences{\bat, \bxt} } }
+\end{equation*}
+
+\item[Appearance Attention:] Cross-entropy with dynamically created target mask $\tau \fences { \bat, \bbt }$.
+\begin{equation*}
+    \loss[\mathrm{a}]{\data, \theta} =   \expc[\p{\baTs, \bsTs}{\bxTs, \bb_1}]{ H \fences{ \tau \fences { \bat, \bbt }, \bst  } }.
+\end{equation*}
+
+%\item[Regularisation:] $L2$ penalty for parameters $\theta$ and the dynamic parameters $\B{\Psi}$ of the DFN.
+%\begin{equation*}
+%    \reg{ \data, \theta } = \frac{1}{2} \norm{ \theta }_2^2 + \frac{1}{2} \norm*{ \expc[\p{\bappTs}{\bxTs, \bb_1}]{\B{\Psi}_t}{\bappt} }_2^2
+%\end{equation*}
+%
+%\item[Adaptive Loss Weighting:] No need to set loss weights $\lambda_i$ manually.
+%\begin{equation*}
+%    \reg{\B{\lambda}} = - \sum_i \log \fences{ \lambda_i^{-1} }
+%\end{equation*}
+\end{description}
+
