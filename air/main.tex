@@ -1,23 +1,12 @@
 \documentclass[]{article}
 
-\usepackage{amsmath}            % align env for aligned equations
-\usepackage{enumitem}           % needed for leftmargin ident of the description env
-\usepackage{bm}                 % uniform bold with \bm
-\usepackage{txfonts}            % conditional independence symbo
-
-
-\include{nonpaperheader}
-\usepackage{mlmacros}
-
-
+\input{packages}
+\input{commands}
 
 %opening
 \title{Attend, Infer, Repeat: Notes}
 \author{Adam Kosiorek}
 
-
-\variables{s,x,y,z}
-\probdists{p,q}
 
 \addbibresource{\string~/Documents/.bib/library.bib}
 
@@ -92,6 +81,9 @@
     \subsection{REBAR}
         This seems terribly complicated \cite{Tucker2017}
         
+\section{FIVO for Better Bounds}
+    Introduced by \cite{Maddison2017}; ywt says its much better for sequential estimation such as AIR than the usual ELBO.
+        
 \section{Complex Backgrounds: Behaviour and Extenstions}
 
     AIR depends on statistical differences between pixels belonging to an object and the ones belonging to the background. Moreover, the way it has been defined, it can reconstruct only objects while neglecting the background completely. It is natural to expect that it simply wouldn't work in the case of non-empty backgrounds. To mitigate this issue, it is necessary to augment the model with a background-explaining component $g$. In a simple case, it could produce a background $\bm{b}$ based on the last hidden state of the controller RNN $R_\phi$, specifically:
@@ -114,6 +106,10 @@
         
     \end{itemize}
     
+    \subsection{Indian Buffer Process for Object Counts}
+        Read and write \citep{Gael2009}.
+        
+    \input{sequential_air}
     
 	\printbibliography
 
