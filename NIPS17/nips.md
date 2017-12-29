@@ -150,36 +150,17 @@ no idea what it is about; 2-player game and Nash equilibria, but MWU... ?
 ### Deep Mean-Shift priors for image restoration #86
 * nice
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### DeepVoice2
+### Graph Matching
+### Dynamic Routing in Capsules
 
 
 
 # Notes
 * do aux stuff during brakes; focus on the proceedings whenever you can
+* some papers have really strong contributions, but most papers have really extensive evaluation; I think I have underappreciated evaluation and I have to pay more attention to it: ablation studies, experiment designed to break stuff etc
+* interpretability is an issue, but it's not only a research problem; it's much about how we approach our model and how much effort do we actually put into finding out what's happening, that's been my sin so far and that's what the talk on Test of Time award talked about. Fix it!
+
+
+# Ideas
+*  Use AIR for relational reasoning with an RN, train both from scratch woth the VAE loss and the quesiton-answering loss on clever. It should lead to much much faster learning and possibly higher performance than the RN.
