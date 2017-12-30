@@ -38,17 +38,20 @@
     
     Since the latent variables $\bz^i$ are independent under the prior, they are exchangeable. It introduces symmetries, which increases the volume of the search space in a combinatorial way. To address this issue, the original work formulates inference as a sequential problem, where latent variables describing a part of a scene depend on previously inferred latent variables. Specifically, it parametrises $n$ as a vector of $n$ ones followed by a zero $\bz^p$. With this representation and a sequential implementation of inference, it is enough to output a single \emph{presence} indicator variable at each processing step. The approximate posterior is given by
     \begin{equation}
-        \q{\bz, \bz^p}{\bx}{\theta} = \q{z^{p, n+1} = 0}{\bz^{1:n}, \bx}{\phi} \prod_{i=1}^n \q{\bz^i, z^{p, i} = 1}{\bz^{1:i-1}, \bx}{\phi},
+        \q{\bz, \bz^p}{\bx}{\phi} = \q{z^{p, n+1} = 0}{\bz^{1:n}, \bx}{\phi} \prod_{i=1}^n \q{\bz^i, z^{p, i} = 1}{\bz^{1:i-1}, \bx}{\phi},
+        \label{eq:air_posterior}
     \end{equation}
-    with $q_\phi$ implemented as a neural network. To avoid explaining the same object twice, it is vital to capture the dependency $bz^i, z^{p, i} \mid \bz^{1:i-1}, \bx$, which is implemented as a recurrent neural network $R_\phi$ with hidden state $\bm{h}^i$, where the initial hidden state $\bm{h}^0$ is randomly initialised and learnable, and specifically as
+    with $q_\phi$ implemented as a neural network. To avoid explaining the same object twice, it is vital to capture the dependency $\bz^i, z^{p, i} \mid \bz^{1:i-1}, \bx$, which is implemented as a recurrent neural network $R_\phi$ with hidden state $\bm{h}^i$, where the initial hidden state $\bm{h}^0$ is randomly initialised and learnable, and specifically as
     \begin{equation}
-        \omega^i, \bm{h}^i = R_\phi (\bx, \bf{h}^{i-1}).
+        \bm{\omega}^i, \bm{h}^i = R_\phi (\bx, \bz^{i-1}, \bf{h}^{i-1}).
+        \label{eq:air_recurrence}
     \end{equation}
     The variable $\omega^i$ specifies parameters of the probability distribution over $\bz^i$ and $z^{p, i}$ and introduces a conditional independence property, namely $\bz^i \Perp z^{p, i} \mid \omega^i$. We can use this property to factorise the approximate posterior distribution as
     \begin{equation}
-          \q{\bz, \bz^p}{\bx}{\theta} = \q{z^{p, n+1} = 0}{\omega^{n+1}}{\phi} \prod_{i=1}^n \q{\bz^i}{\omega^i}{\phi} \q{z^{p, i}}{\omega^i}{\phi}.
+          \q{\bz, \bz^p}{\bx}{\phi} = \q{z^{p, n+1} = 0}{\omega^{n+1}}{\phi} \prod_{i=1}^n \q{\bz^i}{\omega^i}{\phi} \q{z^{p, i}}{\omega^i}{\phi}.
+          \label{eq:air_factorisation}
     \end{equation}
-    Since the hidden state $\bm{h}^i$ does not depend on any of the latent variables, there is no need to integrate over the hidden state \todo{check with the STORN paper}. All of the distribution parameters $\omega$ are computed before any of the distributions is used or even instantiated. That hints at what the implementation might look like: a recurrent neural network should compute the parameters of all the probability distributions, but all sampling can be done outside in a feed-forward fashion.
+    Since the hidden state $\bm{h}^i$ is deterministic, it follows a Dirac distribution centred on $\bf{h^i}$ and there is no need to integrate over the it: the integral collapses to a single value. Latent distribution statistics $\bm{\omega}$ are computed iteratively and depend on the previous latent variables. This precludes analytical computation of the KL-divergence, which has to be approximated by sampling.
     
     
 \section{Learning by Maximising the ELBO}
