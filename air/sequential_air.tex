@@ -1,4 +1,4 @@
-\section{An Extension to Timeseries}
+\section{An Extension to Timeseries: Attend, Propagate, Discover, Repeat (APDR)}
 AIR displays an inconsistent behaviour depending on initialisation. It is randomly initialised and it tends to converge to different solutions when training is restarted. Only a small subset of the solutions is close to what the user would want, namely explaining one object at a time. This is understandable, since a dataset of single images cannot encode any \emph{consistency} prior, whereby objects would have to be preserved when they move. Extending AIR to sequential data has a potential of solving this issue, since it should be much easier to explain an object by changing its position parameter than to infer its appearance description from scratch at every time-step. Moreover, it prevents explaining two objects moving separately with a single glimpse, since it would be impossible to preserve them consistently while reconstructing.
 
 An extension to timeseries is not trivial, however. It requires some form of dependency between consecutive time-step. It is important to distinguish temporal and within-time-step dependencies. We dub the latter \emph{sequential} dependencies. In the original work, sequential dependencies exist between the deterministic hidden states and stochastic latent variables, namely $\bm{h}^i \mid \bm{h}^{i-1}, \bz^{i-1}, z^{p, i-1},$ and $\bz^i, z^{p, i} \mid \bm{h}^{i-1}, z^{p, 1:i-1}$. A temporal version of the algorithm requires (or might benefit from) the following:
@@ -8,6 +8,18 @@ An extension to timeseries is not trivial, however. It requires some form of dep
     \item temporal dependence on object appearance
     \item temporal dependence on object presence
 \end{itemize}
+
+\begin{figure}
+    \includegraphics[width=\textwidth]{seq_air}
+    \caption{The generative story of sequential AIR.}
+    \label{fig:seq_air}
+\end{figure}
+
+\begin{figure}
+    \includegraphics[width=\textwidth]{seq_air_inference}
+    \caption{Graphical model for inference in sequential AIR.}
+    \label{fig:seq_air_inf}
+\end{figure}
 
 \subsection{Sequential Generative Model and Prior}
 
@@ -90,9 +102,9 @@ To infer the latent variables, we have to invert the generative model. To do so,
 %    
     &\qquad= \prod_{t=1}^T  \q{\bzt, \nt, \kt}{\textcolor{red}{\bxt}, \textcolor{blue}{\bz_{1:t-1}, n_{1:t-1}, k_{1:t-1}}}{\phi}\\
 %    
-    &\qquad= \prod_{t=1}^T  \q{\bzt, \nt, \kt}{\bxt, \textcolor{blue}{\bz_{t-1}, n_{t-1}, k_{t-1}}, \bm{h}_t^q}{\phi}\lvert_{\bm{h}_t^q = f^{\mathrm{RNN}}_q \left( \bz_{t-1}, \bm{h}_{t-1}^q \right)} \\
+    &\qquad= \prod_{t=1}^T  \q{\bzt, \nt, \kt}{\bxt, \textcolor{blue}{\bz_{t-1}, n_{t-1}, k_{t-1}}, \bm{h}_t^q}{\phi}\lvert_{\bm{h}_t^q = R^q_\phi \left( \bz_{t-1}, \bm{h}_{t-1}^q \right)} \\
 %    
-    &\qquad= \prod_{t=1}^T  \q{\bzt^D, \nt}{\bxt, \bzt^P, \kt}{\phi} \q{\bzt^P, \kt}{\bxt, \bz_{t-1}, \textcolor{red}{k_{t-1} + n_{t-1}}, \bm{h}_t^q}{\phi} \\
+    &\qquad= \prod_{t=1}^T  \qd{\bzt^D, \nt}{\bxt, \bzt^P, \kt}{\phi} \qp{\bzt^P, \kt}{\bxt, \bz_{t-1}, \textcolor{red}{k_{t-1} + n_{t-1}}, \bm{h}_t^q}{\phi} \\
 %    
     &\qquad= \prod_{t=1}^T  \underbrace{ \qd{\bzt^D, \nt}{\bxt, \bzt^P, \kt}{\phi}}_\mathrm{discovery} \quad \underbrace{\qp{\bzt^P, \kt}{\bxt, \bz_{t-1}, \textcolor{red}{m_{t-1}}, \bm{h}_t^q}{\phi}}_\mathrm{propagation} 
 \end{aligned}
@@ -138,21 +150,44 @@ where
         0, & \text{otherwise}
     \end{cases},\\
 %    
-    &\qquad \qd{\bt^{D, i} = 0}{\bxt, \bzt^{D, 1:i}, \bm{h}_t^{P, \kt}, \kt}{\phi} 
+    &\qquad \qd{\bt^{D, i} \textcolor{blue}{= 0}}{\bxt, \bzt^{D, 1:i}, \bm{h}_t^{P, \kt}, \kt}{\phi} 
     = 1 - \qd{\bt^{D, i}}{\bxt, \bzt^{D, 1:i}, \bm{h}_t^{P, \kt}, \kt}{\phi}.
 \end{aligned}
 \end{equation}
-%
 
-
-\begin{figure}
-    \includegraphics[width=\textwidth]{seq_air}
-    \caption{The generative story of sequential AIR.}
-    \label{fig:seq_air}
-\end{figure}
-
-\begin{figure}
-    \includegraphics[width=\textwidth]{seq_air_inference}
-    \caption{Graphical model for inference in sequential AIR.}
-    \label{fig:seq_air_inf}
-\end{figure}
+\subsection{Variational Lower Bound}
+Given the specification of the prior distribution and the inference model, we can derive the evidence lower bound (ELBO).
+\begin{equation}
+\begin{aligned}
+    &\loss[APDR]{\phi, \theta} = \expc{ \log \frac{ \p{\bzTs, \nTs, \kTs, \bxTs}{}{\theta} }{ \q{\bzTs, \nts, \kts}{\bxTs}{\phi} } }{}{ \q{}{}{\phi} }\\
+    %
+    &= \expc{ \log \p{\bxTs}{\bzTs}{\theta} }{}{ \q{}{}{\phi} } \\
+%    
+    &\qquad \qquad - \kl{\q{\bzTs, \nTs, \kTs}{\bxTs}{\phi}}{\p{\bzTs, \nTs, \kTs}{}{\theta}}.
+\end{aligned}
+\end{equation}
+The KL divergence term cannot be computed analytically due to non-linear temporal dependencies, and we have to resort to a Monte-Carlo approximation. The latter can be rewritten as a sum of per time-step components. 
+\begin{equation}
+\begin{aligned}
+    &\kl{\q{\bzTs, \nTs, \kTs}{\bxTs}{\phi}}{\p{\bzTs, \nTs, \kTs}{}{\theta}}\\
+%    
+    &= \dots\\
+%    
+    &\approx \sum_{t=1}^T \operatorname{KL}_t(\cdot)
+\end{aligned}
+\end{equation}
+where
+\begin{equation}
+\begin{aligned}
+    \operatorname{KL}_t(\cdot) = &\frac{1}{L} \sum_{i=l}^L \log{\frac{ \q{\bzt^{(l)}, \nt^{(l)}, \kt^{(l)}}{\bxt, \bz_{t-1}^{(l)}, n_{t-1}^{(l)}, k_{t-1}^{(l)}, \bm{h}_t^{q,\ (l)}}{\phi} }{ \p{\bxt, \bzt^{(l)}, \nt^{(l)}, \kt^{(l)}}{\bz_{1:t-1}^{(l)}, n_{1:t-1}^{(l)}, k_{1:t-1}^{(l)}}{\theta} }},\\
+%    
+    &\bzTs^{(l)}, \nTs^{(l)}, \kTs^{(l)} \sim \q{\bzTs, \nTs, \kTs}{\bxTs}{\phi},\\
+%    
+    &\bm{h}_t^{q,\ (l)} = R^q_\phi \left( \bz_{t-1}{(l)}, \bm{h}_{t-1}^{q,\ (l)} \right)
+\end{aligned}
+\end{equation}
+The above approximation allows us to rewrite the ELBO as a sum of per time-step components, namely
+\begin{equation}
+    \loss[APDR]{\phi, \theta} \approx \sum_{t=1}^T \expc{ \log \p{\bxt}{\bzt}{\theta} }{}{ \q{}{}{\phi} } - \operatorname{KL}_t(\cdot),
+\end{equation}
+which can be useful if we wanted to use a particle filter estimator of the ELBO, \emph{cf.} \Cref{sec:fivo}.
