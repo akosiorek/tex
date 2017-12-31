@@ -167,19 +167,45 @@ Given the specification of the prior distribution and the inference model, we ca
 \end{aligned}
 \end{equation}
 The KL divergence term cannot be computed analytically due to non-linear temporal dependencies, and we have to resort to a Monte-Carlo approximation. The latter can be rewritten as a sum of per time-step components. 
+%\begin{equation}
+%\begin{aligned}
+%    &\kl{\q{\bzTs, \nTs, \kTs}{\bxTs}{\phi}}{\p{\bzTs, \nTs, \kTs}{}{\theta}}\\
+%%    
+%    &= \dots\\
+%%    
+%    &\approx \sum_{t=1}^T \operatorname{KL}_t(\cdot)
+%\end{aligned}
+%\end{equation}
+Let $\bm{\beta} = \{ \bz, n, k, \bm{h} \}$ denote all latent variables and all hidden states. We have that 
+\todo{Make sure the below is correct!}
 \begin{equation}
 \begin{aligned}
     &\kl{\q{\bzTs, \nTs, \kTs}{\bxTs}{\phi}}{\p{\bzTs, \nTs, \kTs}{}{\theta}}\\
+    %    
+    &= \kl{\q{\bm{\beta}_{1:T}}{\bxTs}{\phi}}{\p{\bm{\beta}_{1:T}}{}{\theta}}\\
 %    
-    &= \dots\\
+    &= \int \q{\bm{\beta}_{1:T}}{\bxTs}{\phi} \log{\frac{\q{\bm{\beta}_{1:T}}{\bxTs}{\phi}}{\p{\bm{\beta}_{1:T}}{}{\theta}}} \dint \bm{\beta}_{1:T}\\
+%    
+    &= \int \prod_{t=1}^T \left[ \q{\bm{\beta}_t}{\textcolor{red}{\bxts, \bm{\beta}_{1:t-1}}}{\phi} \log{\frac{\q{\bm{\beta}_{1:T}}{\bxTs}{\phi}}{\p{\bm{\beta}_{1:T}}{}{\theta}}} \right] \dint \bm{\beta}_{1:T} \\
+%    
+    &= \int \prod_{t=1}^T \left[ \q{\bm{\beta}_t}{\textcolor{red}{\bxt, \bm{\beta}_{t-1}}}{\phi} \log{\frac{\q{\bm{\beta}_{1:T}}{\bxTs}{\phi}}{\p{\bm{\beta}_{1:T}}{}{\theta}}} \right] \dint \bm{\beta}_{1:T}\\
+%    
+    &= \int \prod_{t=1}^T \q{\bm{\beta}_t}{\bxt, \bm{\beta}_{t-1}}{\phi} \left[ \sum_{t=1}^{\textcolor{blue}{T}} \log{\frac{ \q{\bm{\beta}_t}{\bxt, \bm{\beta}_{t-1}}{\phi} }{ \p{\bm{\beta}_t}{\bm{\beta}_{t-1} }{\theta}}} \right] \dint \bm{\beta}_{1:T}\\
+%    
+    &= \textcolor{red}{\int \prod_{t=1}^T} \q{\bm{\beta}_t}{\bxt, \bm{\beta}_{t-1}}{\phi} \left[ \sum_{t=1}^{\textcolor{blue}{t}} \log{\frac{ \q{\bm{\beta}_t}{\bxt, \bm{\beta}_{t-1}}{\phi} }{ \p{\bm{\beta}_t}{\bm{\beta}_{t-1} }{\theta}}} \right] \textcolor{red}{\dint \bm{\beta}_{1:T}}\\
+%    
+    &= \textcolor{red}{\prod_{t=1}^T \int} \underbrace{ \q{\bm{\beta}_t}{\bxt, \bm{\beta}_{t-1}}{\phi} }_{\textcolor{blue}{\text{is that ok?}}} \left[ \sum_{t=1}^t \log{\frac{ \q{\bm{\beta}_t}{\bxt, \bm{\beta}_{t-1}}{\phi} }{ \p{\bm{\beta}_t}{\bm{\beta}_{t-1} }{\theta}}} \right] \textcolor{red}{\dint \bm{\beta}_{t-1:t} }\\
 %    
     &\approx \sum_{t=1}^T \operatorname{KL}_t(\cdot)
 \end{aligned}
 \end{equation}
+
 where
 \begin{equation}
 \begin{aligned}
     \operatorname{KL}_t(\cdot) = &\frac{1}{L} \sum_{i=l}^L \log{\frac{ \q{\bzt^{(l)}, \nt^{(l)}, \kt^{(l)}}{\bxt, \bz_{t-1}^{(l)}, n_{t-1}^{(l)}, k_{t-1}^{(l)}, \bm{h}_t^{q,\ (l)}}{\phi} }{ \p{\bxt, \bzt^{(l)}, \nt^{(l)}, \kt^{(l)}}{\bz_{1:t-1}^{(l)}, n_{1:t-1}^{(l)}, k_{1:t-1}^{(l)}}{\theta} }},\\
+%    
+    \text{with}\\
 %    
     &\bzTs^{(l)}, \nTs^{(l)}, \kTs^{(l)} \sim \q{\bzTs, \nTs, \kTs}{\bxTs}{\phi},\\
 %    
