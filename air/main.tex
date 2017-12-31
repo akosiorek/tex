@@ -68,24 +68,16 @@
     \end{align}
 
 \section{Policy Gradient Techniques}
-    Policy gradients are used here to backprop through samples from a discrete probability distribution.
-    \subsection{Score Function}
-        \cite{Williams1992}
-        
-    \subsection{NVIL}
-        \cite{Mnih2014} implemented but doesn't work that well, presumably because of different effective weightings of the continuous and discrete components of the loss. I still have to check with the lower learning rate.
-        
-    \subsection{Discrete IWAE}
-        To be done... Originally introduced by \cite{Burda2015}, but extended to a discrete case by \cite{Tucker2017}.
+    AIR implements a sequential inference procedure, where the number of steps is given by a discrete latent variable. Policy gradients are used here to backprop through samples from a discrete probability distribution.
+
+    \subsection{NVIL and VIMCO}
+        NVIL, introduced by \cite[]{Mnih2014}, is a method of variance reduction for the score-function estimator (REINFORCE, \cite{Williams1992}). It constructs a control variate from a running mean of the learning signal and an input-dependent baseline, typically a neural network trained jointly with the main model. It also tracks the running standard deviation of the learning signal and normalises centred learning signal. I implemented it, but it doesn't work that well, presumably because of different effective weightings of the continuous and discrete components of the loss. Even Mnih himself discourages using it, and advocates his newer method, VIMCO, instead. VIMCO does indeed work much better and leads to stable training of the model.
         
     \subsection{Convex Relaxation}
-        To be done... concrete distribution/gumbel \cite{Maddison2016,Jang2016}
-        
-    \subsection{REBAR}
-        This seems terribly complicated \cite{Tucker2017}
+        To be done... concrete distribution/gumbel \cite{Maddison2016,Jang2016}. It is a biased estimator, but \cite{Tucker2017} introduced a method to debias it called REBAR. 
         
 \section{FIVO for Better Bounds}
-    Introduced by \cite{Maddison2017}; ywt says its much better for sequential estimation such as AIR than the usual ELBO.
+    Introduced by \cite{Maddison2017}; It's supposedly much better for sequential estimation such as AIR, and especially the sequential version, than the usual ELBO. The problem is it cannot be used with VIMCO, but it can be used with convex relaxation of the discrete latent variable.
         
 \section{Complex Backgrounds: Behaviour and Extenstions}
 
@@ -96,23 +88,8 @@
     \end{align}
     For the case of MNIST, $g$ can be implemented as a simple MLP. For more complicated model, it would have to be a more complicated model based on up-convolutions, but this is also true about the glimpse decoder.
     \todo[inline]{Design an experiment to test this behaviour.}
-
-\section{An Extension to Timeseries}
-    AIR displays an inconsistent behaviour depending on initialisation. It is randomly initialised and it tends to converge to different solutions when training is restarted. Only a small subset of the solutions is close to what the user would want, namely explaining one object at a time. This is understandable, since a dataset of single images cannot encode an \emph{consistency} prior, whereby objects would have to be preserved when they move. Extending AIR to sequential data has a potential of solving this issue, since it should be much easier to explain an object by changing its position parameter than to inferring its appearance description from scratch at every time-step. Moreover, it prevents explaining two objects moving separately with a single glimpse, since it would be impossible to preserve them consistently while reconstructing.
     
-    An extension to timeseries is not trivial, however. It requires some form of dependency between consecutive timestep. It is important to distinguish temporal and within-timestep dependencies. We dub the latter \emph{sequential} dependencies. In the original work, the only sequential dependencies exist between the hidden states $\bm{h}^i \mid \bm{h}^{i-1}$ and the presence variables $z^{p, i} \mid z^{p, 1:i-1}$, while there is no sequential dependence between appearance and position $\bz^i$. A temporal version of the algorithm requires (or might benefit from) the following:
-    \begin{itemize}
-        \item between-timestep hidden state dependence \eg $\bm{h}^t \mid \bm{h}^{t-1}$, where this timestep might or might not be the same as the sequential hidden state
-        \item temporal dependence on object position
-        \item temporal dependence on object appearance
-        \item temporal dependence on object presence
-        
-    \end{itemize}
-    
-    \subsection{Indian Buffer Process for Object Counts}
-        Read and write \citep{Gael2009}.
-        
-    \input{sequential_air}
+\input{sequential_air}
     
 	\printbibliography
 
